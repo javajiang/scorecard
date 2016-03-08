@@ -34,17 +34,17 @@ print MasterData.dtypes
 #Describe.to_csv('../Output/foo.csv', encoding='gbk')
 #raw_input()'''
 
-Summury = pd.read_csv('PPD_summary.csv')
+Summury = pd.read_csv(FilePath + 'PPD_summary.csv')
 Summary = Summury.ix[:,'Columns':'type']
 se = Summary.set_index('Columns')
 se1 = pd.Series(se['type'],index = se.index)
 
 for i in se1.index:
     try:
-        Master[i] = Master[i].astype(se1.ix[i])
+        MasterData[i] = MasterData[i].astype(se1.ix[i])
     except:pass
     
-print Master.dtypes
-Types = Master.dtypes
-#Types.to_csv("sel.csv",index=False,encoding="gb2312")
-Types.to_csv('types.csv')
+print MasterData.dtypes
+Types = MasterData.dtypes
+Types.to_csv("../Output/S1/sel.csv",index=False,encoding="gb18030")
+Types.to_csv('../Output/S1/types.csv')

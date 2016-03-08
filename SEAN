@@ -1,0 +1,55 @@
+#coding = 'gbk'
+author = "changandao"
+
+import random
+import pandas as pd
+#import NumPy as np
+
+#Master = pd.read_csv('Training Set/PPD_Training_Master_GBK_3_1_Training_Set.csv')
+f = open('Training Set/PPD_Training_Master_GBK_3_1_Training_Set.csv')
+data = f.readlines()
+f.close()
+data = map(lambda x:x.decode('gbk').strip().split(',')+['train'],data)
+Master = pd.DataFrame(data[1:],columns=data[0][:-1]+['flag'])
+
+Summury = pd.read_csv('PPD_summary.csv')
+#print Summury
+se = Summury.loc[:,'Columns':'type']
+se1 = se.set_index('Columns')
+se1.sort_index(axis=1, ascending=False)
+#Master = Master.T
+#Master = Master.set_index('Columns')
+Master.sort_index(axis=0, ascending=False)
+for i in Master.dtypes:
+    print i
+print Master.dtypes
+print se1
+#print Master.dtypes
+#Describe =  Master.describe(include='all')
+#print Describe.ix['count'][Describe.ix['count']<Limit]
+#Describe = Describe.T
+#print type(Master.ix[2,2])
+#Describe.to_csv('Output/foo.csv')
+#print Master.describe(include='all')
+#encodeEle(Describe1)
+#print Describe1
+#newdf = Master.apply(encodeEle,axis=0)
+#print newdf
+#for i in range(0,len(Master.ix[5])):
+#    for j in range(0,len(Describe.ix[5])):
+#        Describe_test = map(lambda x:x.encode('gbk'),Describe.ix[i,j])
+#count = random.randint(1,10)
+#rowser = Master.ix(count)
+#print type(rowser)
+#coulmn =   rowser[u'\u4e00'<= rowser <=u'\u9fa5']
+#Master = Master.drop(['UserInfo_2','UserInfo_4','UserInfo_7','UserInfo_8','UserInfo_9','UserInfo_19','UserInfo_20'],axis=1)
+#print Master[1:5]
+
+#Masmin = Master.min()
+#Masmax = Master.max()
+#Masmwan = Master.mean()
+#Masstd = Master.std()
+#for element in Master.ix[]:
+#    print len(element)
+#print Masmin,Masstd
+#fout = open('Output/out.txt','w')

@@ -53,17 +53,17 @@ for i,j in Mdct.items():
     except:pass'''
 #plt.show()
 flag = 0
-for i in range(2,len(Mdct.keys())):
+for i in range(1,len(Mdct.keys())):
     try:
         plt.bar(Mdct[i].index, Mdct[i])
-        plt.show()
-        flag+=1
-        raw_input('enen')
-        if flag>5:
-            break
-        #plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
+        #plt.show()
+        #flag+=1
+        #raw_input('enen')
+        #if flag>5:
+        #    break
+        plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
     except:
-        print 'haha'
+        print i
 #print num.level()
     #empty.append(num)
 #empty.to_csv('../Output/S1/num.csv',encoding = 'gb18030')

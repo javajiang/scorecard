@@ -14,6 +14,9 @@ MasterFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
 Master = pd.read_csv(MasterFile,encoding="gb18030")
 TypeStatement = pd.read_csv(FilePath + 'TypeState.csv')
 
+
+
+
 ###### handeling the dtype ######
 TypeStatement = TypeStatement.dropna(axis=1)
 se = TypeStatement.set_index('Idx')
@@ -32,6 +35,24 @@ for i in ser.index:
     except:pass
 Master.dtypes.to_csv('../Output/S1/newtypes.csv')
 
+Mdct = {}
+count = 0
+for clm in Master.columns:
+    num = Master[clm].value_counts()
+    Mdct[count] = num
+    count +=1
+
+for i in range(len(Mdct.keys())):
+    try:
+        plt.bar(Mdct[i].index, Mdct[i])
+        plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
+    except:
+        pass
+#print num.level()
+    #empty.append(num)
+#empty.to_csv('../Output/S1/num.csv',encoding = 'gb18030')
+
+'''
 ###### dataAnalyse #######
 Mfeature = Master.describe()
 def generatedct(serie,dct):
@@ -46,18 +67,13 @@ for clm in Master.columns:
     Mlist.append(Mdct)
 
 #Mfile = open('../Output/S1/tem.txt')
-Xxis=Mlist[3].keys()
-Yxis=Mlist[3].values()
+for i in range(1,len(Master.columns)-2):
+    Xxis=Mlist[i].keys()
+    Yxis=Mlist[i].values()
 
 plt.bar(Xxis, Yxis)
 plt.show()
-
-###### dataCleaning #######
-def WOEFunc(A,B,k):
-<<<<<<< Updated upstream
-=======
-    newFrame = A.set_index('Idx')
->>>>>>> Stashed changes
+'''
 
 
 '''Summary = Summury.ix[:,'Columns':'type']
@@ -80,6 +96,4 @@ Types.to_csv("../Output/S1/sel.csv",index=False,encoding="gb18030")
 Types.to_csv('../Output/S1/types.csv')
 <<<<<<< Updated upstream
 '''
-=======
-'''
->>>>>>> Stashed changes
+

@@ -12,10 +12,8 @@ FilePath = '../data/'
 Dataset = 'Training Set/'
 MasterFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
 Master = pd.read_csv(MasterFile,encoding="gb18030")
+
 TypeStatement = pd.read_csv(FilePath + 'TypeState.csv')
-
-
-
 
 ###### handeling the dtype ######
 TypeStatement = TypeStatement.dropna(axis=1)
@@ -39,15 +37,33 @@ Mdct = {}
 count = 0
 for clm in Master.columns:
     num = Master[clm].value_counts()
+    #key = (clm, count)
     Mdct[count] = num
-    count +=1
-
-for i in range(len(Mdct.keys())):
+    count += 1
+'''
+flag = 0
+for i,j in Mdct.items():
+    try:
+        plt.bar(Mdct[i].index, j)
+        #plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
+        plt.show()
+        flag += 1
+        if flag >3:
+            break
+    except:pass'''
+#plt.show()
+flag = 0
+for i in range(2,len(Mdct.keys())):
     try:
         plt.bar(Mdct[i].index, Mdct[i])
-        plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
+        plt.show()
+        flag+=1
+        raw_input('enen')
+        if flag>5:
+            break
+        #plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
     except:
-        pass
+        print 'haha'
 #print num.level()
     #empty.append(num)
 #empty.to_csv('../Output/S1/num.csv',encoding = 'gb18030')

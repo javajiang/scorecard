@@ -3,7 +3,6 @@
 __author__ = "changandao&jiangweiwu"
 __date__   = "2016.3.8"
 
-import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -55,6 +54,10 @@ plt.show()
 
 ###### dataCleaning #######
 def WOEFunc(A,B,k):
+<<<<<<< Updated upstream
+=======
+    newFrame = A.set_index('Idx')
+>>>>>>> Stashed changes
 
 
 '''Summary = Summury.ix[:,'Columns':'type']
@@ -75,4 +78,8 @@ print MasterData.dtypes
 Types = MasterData.dtypes
 Types.to_csv("../Output/S1/sel.csv",index=False,encoding="gb18030")
 Types.to_csv('../Output/S1/types.csv')
+<<<<<<< Updated upstream
 '''
+=======
+'''
+>>>>>>> Stashed changes

@@ -53,15 +53,13 @@ for i,j in Mdct.items():
     except:pass'''
 #plt.show()
 flag = 0
+
 for i in range(1,len(Mdct.keys())):
     try:
+        fig = plt.figure()
         plt.bar(Mdct[i].index, Mdct[i])
-        #plt.show()
-        #flag+=1
-        #raw_input('enen')
-        #if flag>5:
-        #    break
-        plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
+        fig.savefig('../Output/Images/'+str(i)+'.png', format='png')
+        plt.close(fig)
     except:
         print i
 #print num.level()

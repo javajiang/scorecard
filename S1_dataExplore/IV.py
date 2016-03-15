@@ -33,19 +33,19 @@ def IVCAL(good,bad):
 
 def IVFunc(Aframe, k):
     lst = []
+    count = 0
     newFrame = Aframe.set_index('Idx')
-    if -1 in newFrame:
-        print 'aaaaaa!'
     goodN = newFrame.groupby('target').get_group(0)
     badN = newFrame.groupby('target').get_group(1)
     dropgroup = []
     for clm in newFrame.columns:
         #tmpFrame = newFrame[clm].dropna()
         if len(newFrame[clm].dropna())<30000*0.8:
+            count+=1
             del newFrame[clm]
+            continue
         else:
             ###### Handling the Categories ######
-            oricount = newFrame[clm].count()
             if newFrame[clm].dtypes =='object':
                 goodOValue = goodN[clm].value_counts()
                 badOValue = badN[clm].value_counts()
@@ -58,10 +58,6 @@ def IVFunc(Aframe, k):
                 goodtmp[(totalOvalue - goodOValue).notnull()] = goodOValue
                 goodtmp[(totalOvalue - goodOValue).isnull()] = 1
 
-                #badall = badtmp.sum()
-                #goodall = goodtmp.sum()
-                #pct_good = goodOValue/goodall
-                #pct_bad = badOValue/badall
                 IV = IVCAL(goodtmp,badtmp)
 
             ######## numerical#######
@@ -70,8 +66,10 @@ def IVFunc(Aframe, k):
                 Maxmum = float(newFrame[clm].max())
                 Minmum = float(newFrame[clm].min())
                 dist = float((Maxmum - Minmum)/k)
-                if dist == 0.:
+                if dist == 0:
                     dropgroup.append(newFrame[clm])
+                    count +=1
+                    print 'haha'
                     del newFrame[clm]
                     continue
                 bins =[]
@@ -94,15 +92,20 @@ def IVFunc(Aframe, k):
                 goodsum[(totalsum==0) != (goodsum == 0)] = 1
                 IV = IVCAL(goodsum,badsum)
                 if IV >1:
-                    print clm
+                    #print clm
+                    count+=1
                     continue
                 elif IV >0.1:
                     print 'this is good: ' + clm
             lst.append(IV)
-    return lst,newFrame
+    return lst,newFrame,count
 
-IV,DF = IVFunc(Master,20)
+Master = Master.replace(-1, np.nan)
+#print len(Master.columns)
+IV,DF,num = IVFunc(Master,20)
+print num
 print IV
+print len(DF.columns)
 for element in IV:
     if element < 0.5:
         print element

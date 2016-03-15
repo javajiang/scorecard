@@ -31,28 +31,36 @@ def IVCAL(good,bad):
     IV = ivser.sum()
     return IV
 
-def IVFunc(Aframe, k):
+def IVFunc(Aframe, k): #k is num of segments for continue variable
     lst = []
     newFrame = Aframe.set_index('Idx')
     if -1 in newFrame:
         print 'aaaaaa!'
-    goodN = newFrame.groupby('target').get_group(0)
-    badN = newFrame.groupby('target').get_group(1)
+    goodN = newFrame.groupby('target').get_group(1)
+    badN = newFrame.groupby('target').get_group(0)
     dropgroup = []
+   
     for clm in newFrame.columns:
         #tmpFrame = newFrame[clm].dropna()
         if len(newFrame[clm].dropna())<30000*0.8:
-            del newFrame[clm]
+            print 'column need to be deleted ',clm,newFrame.columns.get_loc(clm)
+            #del newFrame[clm]
+            #raw_input()
         else:
             ###### Handling the Categories ######
-            oricount = newFrame[clm].count()
+            oricount = newFrame[clm].count() #total count without NaN
+            totalTypes = len(newFrame[clm].value_counts())
+            #print oricount
+            #raw_input()
             if newFrame[clm].dtypes =='object':
                 goodOValue = goodN[clm].value_counts()
                 badOValue = badN[clm].value_counts()
                 totalOvalue = newFrame[clm].value_counts()
+                print len(goodOValue),len(badOValue),len(totalOvalue)
 
-                badtmp = totalOvalue
-                goodtmp = totalOvalue
+                #raw_input()
+                badtmp = totalOvalue.copy()
+                goodtmp = totalOvalue.copy()
                 badtmp[(totalOvalue - badOValue).notnull()] = badOValue
                 badtmp[(totalOvalue - badOValue).isnull()] = 1
                 goodtmp[(totalOvalue - goodOValue).notnull()] = goodOValue
@@ -69,10 +77,12 @@ def IVFunc(Aframe, k):
                 ####### Discretization
                 Maxmum = float(newFrame[clm].max())
                 Minmum = float(newFrame[clm].min())
+                print Maxmum,Minmum
                 dist = float((Maxmum - Minmum)/k)
                 if dist == 0.:
-                    dropgroup.append(newFrame[clm])
-                    del newFrame[clm]
+                    print 'column need to be deleted ',clm,newFrame.columns.get_loc(clm)
+                    #dropgroup.append(newFrame[clm])
+                    #del newFrame[clm]
                     continue
                 bins =[]
                 for i in range(0,k+1):
@@ -104,7 +114,7 @@ def IVFunc(Aframe, k):
 IV,DF = IVFunc(Master,20)
 print IV
 for element in IV:
-    if element < 0.5:
+    if element < 1:
         print element
 #print IV
 #print len(DF.columns)

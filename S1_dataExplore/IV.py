@@ -33,11 +33,13 @@ def IVCAL(good,bad):
 
 def IVFunc(Aframe, k): #k is num of segments for continue variable
     lst = []
+    count = 0
     newFrame = Aframe.set_index('Idx')
     if -1 in newFrame:
         print 'aaaaaa!'
     goodN = newFrame.groupby('target').get_group(1)
     badN = newFrame.groupby('target').get_group(0)
+
     dropgroup = []
    
     for clm in newFrame.columns:
@@ -52,6 +54,11 @@ def IVFunc(Aframe, k): #k is num of segments for continue variable
             totalTypes = len(newFrame[clm].value_counts())
             #print oricount
             #raw_input()
+            count+=1
+            del newFrame[clm]
+            continue
+        else:
+            ###### Handling the Categories ######
             if newFrame[clm].dtypes =='object':
                 goodOValue = goodN[clm].value_counts()
                 badOValue = badN[clm].value_counts()
@@ -66,10 +73,6 @@ def IVFunc(Aframe, k): #k is num of segments for continue variable
                 goodtmp[(totalOvalue - goodOValue).notnull()] = goodOValue
                 goodtmp[(totalOvalue - goodOValue).isnull()] = 1
 
-                #badall = badtmp.sum()
-                #goodall = goodtmp.sum()
-                #pct_good = goodOValue/goodall
-                #pct_bad = badOValue/badall
                 IV = IVCAL(goodtmp,badtmp)
 
             ######## numerical#######
@@ -83,6 +86,12 @@ def IVFunc(Aframe, k): #k is num of segments for continue variable
                     print 'column need to be deleted ',clm,newFrame.columns.get_loc(clm)
                     #dropgroup.append(newFrame[clm])
                     #del newFrame[clm]
+                if dist == 0:
+                    dropgroup.append(newFrame[clm])
+                    count +=1
+                    print 'haha'
+                    del newFrame[clm]
+
                     continue
                 bins =[]
                 for i in range(0,k+1):
@@ -104,15 +113,20 @@ def IVFunc(Aframe, k): #k is num of segments for continue variable
                 goodsum[(totalsum==0) != (goodsum == 0)] = 1
                 IV = IVCAL(goodsum,badsum)
                 if IV >1:
-                    print clm
+                    #print clm
+                    count+=1
                     continue
                 elif IV >0.1:
                     print 'this is good: ' + clm
             lst.append(IV)
-    return lst,newFrame
+    return lst,newFrame,count
 
-IV,DF = IVFunc(Master,20)
+Master = Master.replace(-1, np.nan)
+#print len(Master.columns)
+IV,DF,num = IVFunc(Master,20)
+print num
 print IV
+print len(DF.columns)
 for element in IV:
     if element < 1:
         print element

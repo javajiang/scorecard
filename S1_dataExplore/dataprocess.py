@@ -15,6 +15,7 @@ Master = pd.read_csv(MasterFile,encoding="gb18030")
 
 TypeStatement = pd.read_csv(FilePath + 'TypeState.csv')
 
+
 ###### handeling the dtype ######
 TypeStatement = TypeStatement.dropna(axis=1)
 se = TypeStatement.set_index('Idx')
@@ -40,19 +41,6 @@ for clm in Master.columns:
     #key = (clm, count)
     Mdct[count] = num
     count += 1
-'''
-flag = 0
-for i,j in Mdct.items():
-    try:
-        plt.bar(Mdct[i].index, j)
-        #plt.savefig('../Output/Images/'+str(i)+'.png', format='png')
-        plt.show()
-        flag += 1
-        if flag >3:
-            break
-    except:pass'''
-#plt.show()
-flag = 0
 
 for i in range(1,len(Mdct.keys())):
     try:
@@ -62,10 +50,6 @@ for i in range(1,len(Mdct.keys())):
         plt.close(fig)
     except:
         print i
-#print num.level()
-    #empty.append(num)
-#empty.to_csv('../Output/S1/num.csv',encoding = 'gb18030')
-
 '''
 ###### dataAnalyse #######
 Mfeature = Master.describe()

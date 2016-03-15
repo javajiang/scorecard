@@ -54,21 +54,18 @@ def IVFunc(Aframe, k): #k is num of segments for continue variable
             totalTypes = len(newFrame[clm].value_counts())
             #print oricount
             #raw_input()
-            count+=1
-            del newFrame[clm]
+            #del newFrame[clm]
             continue
-        else:
             ###### Handling the Categories ######
             if newFrame[clm].dtypes =='object':
                 goodOValue = goodN[clm].value_counts()
                 badOValue = badN[clm].value_counts()
                 totalOvalue = newFrame[clm].value_counts()
-                print len(goodOValue),len(badOValue),len(totalOvalue)
-
+                #print len(goodOValue),len(badOValue),len(totalOvalue)
                 #raw_input()
                 badtmp = totalOvalue.copy()
                 goodtmp = totalOvalue.copy()
-                badtmp[(totalOvalue - badOValue).notnull()] = badOValue
+                badtmp[(totalOvalue - badOValue).notnull()] = badOValue #need to add 1 also
                 badtmp[(totalOvalue - badOValue).isnull()] = 1
                 goodtmp[(totalOvalue - goodOValue).notnull()] = goodOValue
                 goodtmp[(totalOvalue - goodOValue).isnull()] = 1

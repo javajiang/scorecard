@@ -14,8 +14,22 @@ Dataset = 'Training Set/'
 MasterFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
 Master = pd.read_csv(MasterFile,encoding="gb18030")
 
-#def WOEcalculate(good, bad, total):
-
+def IVCAL(good,bad):
+    goodall = good.sum()
+    badall = bad.sum()
+    pct_good = good/goodall
+    pct_bad = bad/badall
+    pct_diff = pct_good-pct_bad
+    pct_ratio = pct_good/pct_bad
+    pct_diff =  pct_diff.fillna(0.)
+    pct_ratio =  pct_ratio.fillna(0.)
+    npdiff = np.array(pct_diff)
+    npratio = np.array(pct_ratio)
+    WOE = np.log(npratio)
+    iv = npdiff*WOE
+    ivser = pd.Series(iv)
+    IV = ivser.sum()
+    return IV
 
 def IVFunc(Aframe, k):
     lst = []
@@ -34,25 +48,22 @@ def IVFunc(Aframe, k):
             oricount = newFrame[clm].count()
             if newFrame[clm].dtypes =='object':
                 goodOValue = goodN[clm].value_counts()
-                #print goodOValue
                 badOValue = badN[clm].value_counts()
                 totalOvalue = newFrame[clm].value_counts()
-                #print (totalOvalue - goodOValue).isnull()
-                #addindex =  totalOvalue[(totalOvalue - badOValue).isnull()].index
-                #badOValue[addindex] =1
-                #print totalOvalue[(totalOvalue - badOValue).isnull()]
-                #print badOValue[(totalOvalue - badOValue).isnull()]
-                #goodOValue = goodOValue
-                #badOValue = badOValue
-                #totalOvalue
-                pct_good = goodOValue/totalOvalue
-                pct_bad = badOValue/totalOvalue
 
-                #print goodOValue
-                #print badOValue
-                #print totalOvalue
-                #print pct_good
-                #print pct_bad
+                badtmp = totalOvalue
+                goodtmp = totalOvalue
+                badtmp[(totalOvalue - badOValue).notnull()] = badOValue
+                badtmp[(totalOvalue - badOValue).isnull()] = 1
+                goodtmp[(totalOvalue - goodOValue).notnull()] = goodOValue
+                goodtmp[(totalOvalue - goodOValue).isnull()] = 1
+
+                #badall = badtmp.sum()
+                #goodall = goodtmp.sum()
+                #pct_good = goodOValue/goodall
+                #pct_bad = badOValue/badall
+                IV = IVCAL(goodtmp,badtmp)
+
             ######## numerical#######
             else:
                 ####### Discretization
@@ -80,31 +91,14 @@ def IVFunc(Aframe, k):
                 goodsum = goodsum.sort_index()# sort the index
                 badsum = badsum.sort_index()# sort the index
                 badsum[(totalsum==0) != (badsum == 0)] = 1
-                badall = badsum.sum()
                 goodsum[(totalsum==0) != (goodsum == 0)] = 1
-                goodall = goodsum.sum()
-                #print (totalsum==0) == (badsum == 0)
-
-                ###### WOE CACULATINF ######
-                pct_good = goodsum/goodall
-                pct_bad = badsum/badall
-                pct_diff = pct_good-pct_bad
-                pct_ratio = pct_good/pct_bad
-                pct_diff =  pct_diff.fillna(0.)
-                pct_ratio =  pct_ratio.fillna(0.)
-                #print pct_diff
-                #print pct_ratio
-                npdiff = np.array(pct_diff)
-                npratio = np.array(pct_ratio)
-                #print npdiff
-                #print npratio
-
-                WOE = np.log(npratio)
-                iv = npdiff*WOE
-                #print iv
-                ivser = pd.Series(iv)
-                IV = ivser.sum()
-                lst.append(IV)
+                IV = IVCAL(goodsum,badsum)
+                if IV >1:
+                    print clm
+                    continue
+                elif IV >0.1:
+                    print 'this is good: ' + clm
+            lst.append(IV)
     return lst,newFrame
 
 IV,DF = IVFunc(Master,20)

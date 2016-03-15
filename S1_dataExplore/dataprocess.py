@@ -46,7 +46,7 @@ for i in range(1,len(Mdct.keys())):
     try:
         fig = plt.figure()
         plt.bar(Mdct[i].index, Mdct[i])
-        fig.savefig('../Output/Images/'+str(i)+'.png', format='png')
+        fig.savefig('../Output/S1//staticstics'+str(i)+'.png', format='png')
         plt.close(fig)
     except:
         print i

@@ -20,6 +20,8 @@ Master = pd.read_csv(MasterFile,encoding="gb18030")
 def IVFunc(Aframe, k):
     lst = []
     newFrame = Aframe.set_index('Idx')
+    if -1 in newFrame:
+        print 'aaaaaa!'
     goodN = newFrame.groupby('target').get_group(0)
     badN = newFrame.groupby('target').get_group(1)
     dropgroup = []
@@ -29,6 +31,7 @@ def IVFunc(Aframe, k):
             del newFrame[clm]
         else:
             ###### Handling the Categories ######
+            oricount = newFrame[clm].count()
             if newFrame[clm].dtypes =='object':
                 goodOValue = goodN[clm].value_counts()
                 #print goodOValue
@@ -72,21 +75,21 @@ def IVFunc(Aframe, k):
                 totalsum = totalcuts.value_counts()
                 goodsum = goodcuts.value_counts()
                 badsum = badcuts.value_counts()
-                totalsum += 1###### ALL ADD 1
-                goodsum += 1
-                badsum += 1
 
                 totalsum = totalsum.sort_index() # sort the index
                 goodsum = goodsum.sort_index()# sort the index
                 badsum = badsum.sort_index()# sort the index
+                badsum[(totalsum==0) != (badsum == 0)] = 1
+                badall = badsum.sum()
+                goodsum[(totalsum==0) != (goodsum == 0)] = 1
+                goodall = goodsum.sum()
+                #print (totalsum==0) == (badsum == 0)
 
                 ###### WOE CACULATINF ######
-                pct_good = goodsum/totalsum
-                pct_bad = badsum/totalsum
+                pct_good = goodsum/goodall
+                pct_bad = badsum/badall
                 pct_diff = pct_good-pct_bad
                 pct_ratio = pct_good/pct_bad
-                #print pct_diff
-                #print pct_ratio
                 pct_diff =  pct_diff.fillna(0.)
                 pct_ratio =  pct_ratio.fillna(0.)
                 #print pct_diff
@@ -97,13 +100,9 @@ def IVFunc(Aframe, k):
                 #print npratio
 
                 WOE = np.log(npratio)
-                #print WOE
                 iv = npdiff*WOE
                 #print iv
                 ivser = pd.Series(iv)
-                #ivser = ivser.fillna(0.)
-                #print ivser[0]
-                #npiv = np.array(ivser)
                 IV = ivser.sum()
                 lst.append(IV)
     return lst,newFrame

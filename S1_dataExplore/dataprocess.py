@@ -15,6 +15,9 @@ Master = pd.read_csv(MasterFile,encoding="gb18030")
 
 TypeStatement = pd.read_csv(FilePath + 'TypeState.csv')
 
+Master.dtypes.to_csv('../Output/S1//Test/oritypes.csv')
+
+print Master.info()
 
 ###### handeling the dtype ######
 TypeStatement = TypeStatement.dropna(axis=1)
@@ -26,6 +29,7 @@ for i in ser.index:
     #else:pass
     elif ser[i]=='Numerical':
         if Master[i].dtypes == 'object':
+            print i, Master.columns.get_loc(i)
             ser[i] = 'float64'
         else:pass
     else:pass
@@ -33,7 +37,7 @@ for i in ser.index:
         Master[i] = Master[i].astype(ser[i])
     except:pass
 Master.dtypes.to_csv('../Output/S1/newtypes.csv')
-
+'''
 Mdct = {}
 count = 0
 for clm in Master.columns:
@@ -51,27 +55,7 @@ for i in range(1,len(Mdct.keys())):
     except:
         print i
 '''
-###### dataAnalyse #######
-Mfeature = Master.describe()
-def generatedct(serie,dct):
-    for s in serie:
-        dct[s] = dct.get(s,0)+1
-    return dct
 
-Mlist = []
-for clm in Master.columns:
-    Mdct = {}
-    Mdct = generatedct(Master[clm],Mdct)
-    Mlist.append(Mdct)
-
-#Mfile = open('../Output/S1/tem.txt')
-for i in range(1,len(Master.columns)-2):
-    Xxis=Mlist[i].keys()
-    Yxis=Mlist[i].values()
-
-plt.bar(Xxis, Yxis)
-plt.show()
-'''
 
 
 '''Summary = Summury.ix[:,'Columns':'type']

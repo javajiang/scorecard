@@ -63,7 +63,7 @@ for train_index, test_index in skf:
     Y_Label_Test = Y_Label[test_index]
     #print test_index,len(test_index)
     cost_time = time()
-    grd = ensemble.GradientBoostingClassifier(n_estimators=500,max_depth=4,learning_rate=0.005) #test case learning_rate=0.01
+    grd = ensemble.GradientBoostingClassifier(n_estimators=200,max_depth=4,learning_rate=0.005) #test case learning_rate=0.01
     #grd = ensemble.RandomForestClassifier(max_depth=8, n_estimators=200)
     grd.fit(X_Data_Train, Y_Label_Train)
     cost_time = time() - cost_time
@@ -85,7 +85,7 @@ for train_index, test_index in skf:
 
     print temp_X_Train.shape,New_X_Data_Train.shape
     for i,C in enumerate((0.06,0.05)):
-        grd_lm = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
+        grd_lm = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.005,solver='liblinear',max_iter=200)
         grd_lm.fit(New_X_Data_Train, Y_Label_Train)
 
         y_pred_grd_lm = grd_lm.predict_proba(New_Test_Data)[:, 1]

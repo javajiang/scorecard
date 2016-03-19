@@ -44,60 +44,60 @@ print New_X_Data.shape,New_Test_Data.shape
 
 #####################################test and submit 3
 
-skf = cross_validation.StratifiedKFold(Y_Label.values,25)
-
-for train_index, test_index in skf:
-    X_Data_Train = New_X_Data[train_index]
-    X_Data_Test = New_X_Data[test_index]
-    Y_Label_Train = Y_Label[train_index]
-    Y_Label_Test = Y_Label[test_index]
-    #print test_index,len(test_index)
-    cost_time = time()
-    grd = ensemble.RandomForestClassifier(max_depth=8, n_estimators=400)
-    grd.fit(X_Data_Train, Y_Label_Train)
-    cost_time = time() - cost_time
-    print cost_time
-    cost_time = time()
-    grd_enc = preprocessing.OneHotEncoder()
-
-    temp_X_Train = grd.apply(X_Data_Train)
-    temp_X_Test = grd.apply(X_Data_Test)
-
-    grd_enc.fit(temp_X_Train)
-    cost_time = time() - cost_time
-    print cost_time
-    New_X_Data_Train = grd_enc.transform(temp_X_Train)
-    New_Test_Data = grd_enc.transform(temp_X_Test)
-   
-
-    print temp_X_Train.shape,New_X_Data_Train.shape
-    for i,C in enumerate((0.06,0.05)):
-        grd_lm = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.002,solver='liblinear',max_iter=400)
-        grd_lm.fit(New_X_Data_Train, Y_Label_Train)
-
-        y_pred_grd_lm = grd_lm.predict_proba(New_Test_Data)[:, 1]
-        res_l2_LR = metrics.roc_auc_score(Y_Label_Test, y_pred_grd_lm)
-        print i,res_l2_LR
-
-
-    y_pred_grd = grd.predict_proba(X_Data_Test)[:, 1]
-    res_l2_LR = metrics.roc_auc_score(Y_Label_Test, y_pred_grd)
-    print res_l2_LR
+##skf = cross_validation.StratifiedKFold(Y_Label.values,25)
+##
+##for train_index, test_index in skf:
+##    X_Data_Train = New_X_Data[train_index]
+##    X_Data_Test = New_X_Data[test_index]
+##    Y_Label_Train = Y_Label[train_index]
+##    Y_Label_Test = Y_Label[test_index]
+##    #print test_index,len(test_index)
+##    cost_time = time()
+##    grd = ensemble.RandomForestClassifier(max_depth=8, n_estimators=400)
+##    grd.fit(X_Data_Train, Y_Label_Train)
+##    cost_time = time() - cost_time
+##    print cost_time
+##    cost_time = time()
+##    grd_enc = preprocessing.OneHotEncoder()
+##
+##    temp_X_Train = grd.apply(X_Data_Train)
+##    temp_X_Test = grd.apply(X_Data_Test)
+##
+##    grd_enc.fit(temp_X_Train)
+##    cost_time = time() - cost_time
+##    print cost_time
+##    New_X_Data_Train = grd_enc.transform(temp_X_Train)
+##    New_Test_Data = grd_enc.transform(temp_X_Test)
+##   
+##
+##    print temp_X_Train.shape,New_X_Data_Train.shape
+##    for i,C in enumerate((0.06,0.05)):
+##        grd_lm = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.002,solver='liblinear',max_iter=400)
+##        grd_lm.fit(New_X_Data_Train, Y_Label_Train)
+##
+##        y_pred_grd_lm = grd_lm.predict_proba(New_Test_Data)[:, 1]
+##        res_l2_LR = metrics.roc_auc_score(Y_Label_Test, y_pred_grd_lm)
+##        print i,res_l2_LR
+##
+##
+##    y_pred_grd = grd.predict_proba(X_Data_Test)[:, 1]
+##    res_l2_LR = metrics.roc_auc_score(Y_Label_Test, y_pred_grd)
+##    print res_l2_LR
     
 
-##grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4) 
-##grd.fit(New_X_Data, Y_Label)
-##temp_X_Train = grd.apply(New_X_Data)[:, :, 0]
-##temp_X_Test = grd.apply(New_Test_Data)[:, :, 0]
-##grd_enc = preprocessing.OneHotEncoder()
-##grd_enc.fit(temp_X_Train)
-##New_temp_X_Train = grd_enc.transform(temp_X_Train)
-##New_temp_X_Test = grd_enc.transform(temp_X_Test)
-##grd_lm = linear_model.LogisticRegression(C=0.06,penalty='l1',tol=0.005,solver='liblinear',max_iter=400)
-##grd_lm.fit(New_temp_X_Train, Y_Label)
-##New_Test_Data_res = grd_lm.predict_proba(New_temp_X_Test)
-##Total_res = np.column_stack((New_Test_Data[:,0].astype(int),New_Test_Data_res[:,1]))
-##np.savetxt('2.csv',Total_res,fmt='%.6f')
+grd = ensemble.RandomForestClassifier(n_estimators=500,max_depth=8) 
+grd.fit(New_X_Data, Y_Label)
+temp_X_Train = grd.apply(New_X_Data)
+temp_X_Test = grd.apply(New_Test_Data)
+grd_enc = preprocessing.OneHotEncoder()
+grd_enc.fit(temp_X_Train)
+New_temp_X_Train = grd_enc.transform(temp_X_Train)
+New_temp_X_Test = grd_enc.transform(temp_X_Test)
+grd_lm = linear_model.LogisticRegression(C=0.06,penalty='l1',tol=0.001,solver='liblinear',max_iter=500)
+grd_lm.fit(New_temp_X_Train, Y_Label)
+New_Test_Data_res = grd_lm.predict_proba(New_temp_X_Test)
+Total_res = np.column_stack((New_Test_Data[:,0].astype(int),New_Test_Data_res[:,1]))
+np.savetxt('3.csv',Total_res,fmt='%.6f')
 
 
 ######################################################

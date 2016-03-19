@@ -116,3 +116,5 @@ $RECYCLE.BIN/
 *.xml
 .idea/workspace.xml
 .idea/encodings.xml
+
+*.xml

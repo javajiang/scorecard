@@ -62,7 +62,7 @@ def resetType(df,oridf):
 
 
 def Objectprocess(goodser, badser,totalser):
-
+    record_hash = {}
     goodOValue = goodser.value_counts()
     badOValue = badser.value_counts()
     totalOvalue = totalser.value_counts()
@@ -82,11 +82,16 @@ def Objectprocess(goodser, badser,totalser):
     Woe_of_O = WOEFUNC(good_pct,bad_pct)
     total[:] = Woe_of_O
     tmptotal = totalser.copy()
-    for j in totalser.isnull():
-        if j:
-            print 'wow!'
-    #for i in totalser.index:
-    #    print total[totalser[i]]
+    totalidx = total.index
+    print total
+    for i in tmptotal.index:
+        idx = totalidx.get_loc(tmptotal[i])
+        try:
+            tmptotal[i] = total[idx]
+        except :
+            pass
+    print tmptotal
+        #tmptotal[i] = total[tmptotal[i]]
     IV_Objekt = IVCAL(goodtmp,badtmp)
     return IV_Objekt,tmptotal
 
@@ -106,7 +111,7 @@ def NUMprocess(goodser, badser, totalser,bin):
     badsum = badsum.sort_index()# sort the index
     badsum[(totalsum==0) != (badsum == 0)] = 1
     goodsum[(totalsum==0) != (goodsum == 0)] = 1
-    IV_NUM = IVCAL(goodsum,badsum)
+    IV_NUM = IVCAL(goodsum, badsum)
     return IV_NUM
 
 
@@ -123,66 +128,67 @@ def IVFunc(Aframe, k):
     final_IV = 0
     count = 0
     dicretcount = 0
+    #newFrame = Aframe
     newFrame = Aframe.set_index('Idx')
     goodN = newFrame.groupby('target').get_group(1)
     badN = newFrame.groupby('target').get_group(0)
-
     dropgroup =[]
     for clm in newFrame.columns:
-        if len(newFrame[clm].dropna())<30000*0.8:
-            #print 'column need to be deleted ',clm,newFrame.columns.get_loc(clm)
-            del newFrame[clm]
+        if clm == 'target':
             continue
-
         else:
-            newFrame[clm] = newFrame[clm].interpolate()
-            #oricount = newFrame[clm].count() #total count without NaN
-            #totalTypes = len(newFrame[clm].value_counts())
+            if len(newFrame[clm].dropna())<30000*0.8:
+                dropgroup.append(newFrame[clm])
+                del newFrame[clm]
+                continue
 
-            ###### Handling the Categories ######
-            if newFrame[clm].dtypes =='object':
-                #newFrame.ix[newFrame[clm].isnull(),clm] = u'no'
-                #goodN.ix[goodN[clm].isnull(),clm] = u'no'
-                #badN.ix[badN[clm].isnull(),clm] = u'no'
-
-                print 'oblect',clm, newFrame.columns.get_loc(clm)
-                final_IV,newFrame.ix[clm] = Objectprocess(goodN[clm],badN[clm],newFrame[clm])
-                #print newFrame[clm]
-                if final_IV >1:
-                    count+=1
-                    #print 'BUG'
-                    continue
-
-            ######## numerical#######
             else:
-                #imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
-                #imp.fit(newFrame[clm])
-                #newFrame[clm]=imp.transform(newFrame[clm])
-                ####### Discretization
-                Maxmum = float(newFrame[clm].max())
-                Minmum = float(newFrame[clm].min())
-                dist = float((Maxmum - Minmum)/k)
-                if Maxmum < 100:
-                    final_IV,newFrame.ix[:,clm] = Objectprocess(goodN[clm],badN[clm],newFrame[clm])
-                    dicretcount+=1
-                else:
-                    if dist == 0:
-                        dropgroup.append(newFrame[clm])
-                        #count +=1
-                        del newFrame[clm]
-                        continue
-                    bins =[]
-                    for i in range(0,k+1):
-                        start = Minmum + i*dist
-                        bins.append(start)
-                    final_IV = NUMprocess(goodN[clm],badN[clm],newFrame[clm],bins)
+                '''if
+                    for i in newFrame[clm].index:
+                        newFrame.ix[i,clm] = int(newFrame.ix[i,clm])
+                        newFrame.ix[i,clm] = newFrame[clm].fillna(newFrame[clm].mean())
+
+                    newFrame[clm] = newFrame[clm].fillna(u'no')'''
+
+                if newFrame[clm].dtypes =='object':
+                    #for i in newFrame[clm].index:
+                    newFrame[clm] = newFrame[clm].fillna(u'no')
+
+                    final_IV,newFrame[clm] = Objectprocess(goodN[clm],badN[clm],newFrame[clm])
                     if final_IV >1:
                         count+=1
                         continue
-                    elif final_IV >0.1:
-                        pass
 
-            lst.append(final_IV)
+                ######## numerical#######
+                else:
+                    #imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
+                    #imp.fit(newFrame[clm])
+                    #newFrame[clm]=imp.transform(newFrame[clm])
+                    ####### Discretization
+                    Maxmum = float(newFrame[clm].max())
+                    Minmum = float(newFrame[clm].min())
+                    dist = float((Maxmum - Minmum)/k)
+                    if Maxmum < 100:
+                        final_IV,newFrame[clm] = Objectprocess(goodN[clm],badN[clm],newFrame[clm])
+                        dicretcount+=1
+                    else:
+                        if dist == 0:
+                            dropgroup.append(newFrame[clm])
+                            #count +=1
+                            del newFrame[clm]
+                            continue
+                        bins =[]
+                        for i in range(0,k+1):
+                            start = Minmum + i*dist
+                            bins.append(start)
+                        final_IV = NUMprocess(goodN[clm],badN[clm],newFrame[clm],bins)
+                        if final_IV >1:
+                            count+=1
+                            continue
+                        elif final_IV >0.1:
+                            pass
+
+                lst.append(final_IV)
     #print dicretcount,count
     return lst,newFrame
 
@@ -191,9 +197,10 @@ def IVFunc(Aframe, k):
 Master = Master.replace(-1, np.nan)
 Master = resetType(TypeStatement,Master)
 IV,DF = IVFunc(Master,20)
-#print DF
-#print IV
-#print len(DF.columns)
-'''for element in IV:
+print DF
+DF.to_csv('../Output/S1/staticstics/sdeleted.csv', encoding="gb18030")
+print IV
+print len(DF.columns)
+for element in IV:
     if element > 1:
-        print element'''
+        print element

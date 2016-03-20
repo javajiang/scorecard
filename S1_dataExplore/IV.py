@@ -1,4 +1,4 @@
-#coding = 'utf-8'
+﻿#coding = 'utf-8'
 """data explore for raw datasheet"""
 __author__ = "changandao&jiangweiwu"
 __date__   = "2016.3.8"
@@ -83,14 +83,14 @@ def Objectprocess(goodser, badser,totalser):
     total[:] = Woe_of_O
     tmptotal = totalser.copy()
     totalidx = total.index
-    print total
+    #print total
     for i in tmptotal.index:
         idx = totalidx.get_loc(tmptotal[i])
         try:
             tmptotal[i] = total[idx]
         except :
             pass
-    print tmptotal
+    #print tmptotal
         #tmptotal[i] = total[tmptotal[i]]
     IV_Objekt = IVCAL(goodtmp,badtmp)
     return IV_Objekt,tmptotal
@@ -134,10 +134,14 @@ def IVFunc(Aframe, k):
     badN = newFrame.groupby('target').get_group(0)
     dropgroup =[]
     for clm in newFrame.columns:
+        #print clm
+        #raw_input()
         if clm == 'target':
             continue
         else:
-            if len(newFrame[clm].dropna())<30000*0.8:
+            rate = float(len(newFrame[clm].dropna()))/30000
+            if rate<0.75:
+                print clm,' drop ',str(rate)
                 dropgroup.append(newFrame[clm])
                 del newFrame[clm]
                 continue
@@ -152,7 +156,7 @@ def IVFunc(Aframe, k):
 
                 if newFrame[clm].dtypes =='object':
                     #for i in newFrame[clm].index:
-                    newFrame[clm] = newFrame[clm].fillna(u'no')
+                    newFrame[clm] = newFrame[clm].fillna(u'no') #option with D E
 
                     final_IV,newFrame[clm] = Objectprocess(goodN[clm],badN[clm],newFrame[clm])
                     if final_IV >1:
@@ -168,12 +172,13 @@ def IVFunc(Aframe, k):
                     Maxmum = float(newFrame[clm].max())
                     Minmum = float(newFrame[clm].min())
                     dist = float((Maxmum - Minmum)/k)
-                    if Maxmum < 100:
+                    if (Maxmum - Minmum) < k:
                         final_IV,newFrame[clm] = Objectprocess(goodN[clm],badN[clm],newFrame[clm])
                         dicretcount+=1
                     else:
                         if dist == 0:
                             dropgroup.append(newFrame[clm])
+                            print clm,' drop  with 0 dist '
                             #count +=1
                             del newFrame[clm]
                             continue
@@ -194,13 +199,14 @@ def IVFunc(Aframe, k):
 
 
 #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-Master = Master.replace(-1, np.nan)
+Master = Master.replace(-1, np.nan) ###Master = Master.replace(-1, np.nan) #D E 不详
 Master = resetType(TypeStatement,Master)
+print 'resetType finished' 
 IV,DF = IVFunc(Master,20)
-print DF
-DF.to_csv('../Output/S1/staticstics/sdeleted.csv', encoding="gb18030")
-print IV
-print len(DF.columns)
-for element in IV:
-    if element > 1:
-        print element
+#print DF
+DF.to_csv('../Output/S1/statistics/seleted_Master.csv', encoding="gb18030")
+#print IV
+#print len(DF.columns)
+#for element in IV:
+#    if element > 1:
+#        print element

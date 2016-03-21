@@ -1,3 +1,4 @@
+
 #coding = 'utf-8'
 """data explore for raw datasheet"""
 __author__ = "changandao&jiangweiwu"
@@ -11,25 +12,28 @@ import matplotlib.pyplot as plt
 from pandas import datetime
 
 
-class Dateprocess:
-    self.corresWOE = pd.DataFrame()
-    self.replacedclm = pd.DataFrame()
-    self.dropdf = pd.DataFrame()
-    def __init__(self, ori_train_file, ori_test_file, ori_type_file, k, case, timeoption=0):
-        self.ori_train_file = ori_train_file
-        self.ori_type_file = ori_type_file
-        self.ori_test_file = ori_test_file
+class IVProcess:
+    corresWOE = pd.DataFrame()
+    replacedclm = pd.DataFrame()
+    dropdf = pd.DataFrame()
+    ori_train_file = pd.DataFrame()
+    ori_type_file = pd.DataFrame()
+    ori_test_file = pd.DataFrame()
+    k = 0
+    case = 0
+    timeoption = 0
+    def __init__(self, ori_train_file_name, ori_test_file_name, ori_type_file_name, k, case, timeoption=0):
+        self.ori_train_file = pd.read_csv(ori_train_file_name,encoding="gb18030")
+        self.ori_type_file = pd.read_csv(ori_type_file_name,encoding="gb18030")
+        self.ori_test_file = pd.read_csv(ori_test_file_name,encoding="gb18030")
         self.k = k
         self.case = case
         self.timeoption = timeoption
-        self.corresWOE = pd.DataFrame()
-        self.replacedclm = pd.DataFrame()
-        self.dropdf = pd.DataFrame()
         self.ori_train_file = self.__replacenull(self.ori_train_file)
         self.ori_test_file = self.__replacenull(self.ori_test_file)
         print 'all -1 has been replaced'
-        self.resetType(self.ori_train_file,self.ori_type_file)
-        self.resetType(self.ori_test_file,self.ori_type_file)
+        self.__resetType(self.ori_train_file,self.ori_type_file)
+        self.__resetType(self.ori_test_file,self.ori_type_file)
         print 'resetType finished'
 
     def __replacenull(self,ori_file):
@@ -163,7 +167,7 @@ class Dateprocess:
 
 
 
-    def resetType(self,ori_file,ori_type_file):
+    def __resetType(self,ori_file,ori_type_file):
         typetmp = ori_type_file.dropna(axis=1)
         se = typetmp.set_index('Idx')
         ser = pd.Series(se['Index'],index = typetmp['Idx'])
@@ -248,20 +252,20 @@ class Dateprocess:
 if __name__=='__main__':
     FilePath = '../data/'
     Dataset = 'Training Set/'
-    TESTSET = 'Test Set/'
-    MasterFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
-    Master = pd.read_csv(MasterFile,encoding="gb18030")
-    TESTFile = FilePath + TESTSET + 'PPD_Master_GBK_2_Test_Set.csv'
-    TEST = pd.read_csv(TESTFile,encoding="gb18030")
-    TypeStatement = pd.read_csv(FilePath + 'TypeState.csv')
+    Testset = 'Test Set/'
+    MasterTrainFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
+    MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
+    MasterFileType = FilePath + 'TypeState.csv'
 
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0)
+    IV, DF, droped = ivpro.IVFunc()
     #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    IV, DF, droped = Dateprocess(Master, TypeStatement,20,1,0)
-    TESTDATA = Dateprocess(Master, TEST, TypeStatement,20,1,0)
-    DF_test,droped_Test = Dateprocess.handel_test(TESTDATA)
+    # 
+    #TESTDATA = Dateprocess(Master, TEST, TypeStatement,20,1,0)
+    #DF_test,droped_Test = Dateprocess.handel_test(TESTDATA)
     #print DF
-    DF.to_csv('../Output/S1/statistics/seleted_Master.csv', encoding="gb18030")
-    droped.to_csv('../Output/S1/statistics/droped_Master.csv', encoding="gb18030")
-    DF_test.to_csv('../Output/S1/statistics/seleted_Test.csv', encoding="gb18030")
-    droped_Test.to_csv('../Output/S1/statistics/droped_Test.csv', encoding="gb18030")
+    DF.to_csv('../Output/S1/statistics/seleted_Master_Train.csv', encoding="gb18030")
+    droped.to_csv('../Output/S1/statistics/droped_Master_Train.csv', encoding="gb18030")
+    DF_test.to_csv('../Output/S1/statistics/seleted_Master_Train.csv', encoding="gb18030")
+    droped_Test.to_csv('../Output/S1/statistics/droped_Master_Test.csv', encoding="gb18030")
     #droped_test.to_csv('../Output/S1/statistics/droped_Master.csv', encoding="gb18030")

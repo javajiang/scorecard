@@ -6,7 +6,7 @@ __date__   = "2016.3.8"
 
 import numpy as np
 import pandas as pd
-#from sklearn import *
+from sklearn import *
 #from sklearn.preprocessing import Imputer
 import matplotlib.pyplot as plt
 from pandas import datetime
@@ -16,25 +16,28 @@ class IVProcess:
     corresWOE = pd.DataFrame()
     replacedclm = pd.DataFrame()
     dropdf = pd.DataFrame()
-    ori_train_file = pd.DataFrame()
-    ori_type_file = pd.DataFrame()
-    ori_test_file = pd.DataFrame()
+    ori_train_file = ''
+    ori_type_file = ''
+    ori_test_file = ''
     k = 0
     case = 0
     timeoption = 0
-    def __init__(self, ori_train_file_name, ori_test_file_name, ori_type_file_name, k, case, timeoption=0):
+    NaNRate = 0
+    def __init__(self, ori_train_file_name, ori_test_file_name, ori_type_file_name, k, case, timeoption,NaNRate):
         self.ori_train_file = pd.read_csv(ori_train_file_name,encoding="gb18030")
         self.ori_type_file = pd.read_csv(ori_type_file_name,encoding="gb18030")
         self.ori_test_file = pd.read_csv(ori_test_file_name,encoding="gb18030")
         self.k = k
         self.case = case
         self.timeoption = timeoption
+        self.NaNRate = NaNRate
         self.ori_train_file = self.__replacenull(self.ori_train_file)
         self.ori_test_file = self.__replacenull(self.ori_test_file)
         print 'all -1 has been replaced'
         self.__resetType(self.ori_train_file,self.ori_type_file)
         self.__resetType(self.ori_test_file,self.ori_type_file)
         print 'resetType finished'
+   
 
     def __replacenull(self,ori_file):
         ori_file = ori_file.replace(-1, np.nan)
@@ -203,7 +206,7 @@ class IVProcess:
                 else:continue
             else:
                 rate = float(len(newFrame[clm].dropna()))/30000
-                if rate<0.75:
+                if rate<self.NaNRate:
                     print clm,' drop ',str(rate)
                     self.dropdf[clm] = newFrame[clm]
                     del newFrame[clm]
@@ -221,32 +224,37 @@ class IVProcess:
 
                     ######## numerical#######
                     else:
-                        #imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
-                        #imp.fit(newFrame[clm])
-                        #newFrame[clm]=imp.transform(newFrame[clm])
+                        continue
+        print newFrame.dtypes
+        imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
+        imp.fit(newFrame)
+        test = imp.transform(newFrame)
+        print newFrame.shape,test.shape
+        newFrame[clm] = test
+                        
                         ####### Discretization
-                        Maxmum = float(newFrame[clm].max())
-                        Minmum = float(newFrame[clm].min())
-                        dist = float((Maxmum - Minmum)/self.k)
-                        if (Maxmum - Minmum) < self.k:
-                            final_IV,newFrame[clm],reflag = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
-                        else:
-                            if dist == 0:
-                                self.dropdf[clm] = newFrame[clm]
-                                print clm,' drop  with 0 dist '
-                                del newFrame[clm]
-                                continue
-                            bins =[]
-                            for i in range(0,self.k+1):
-                                start = Minmum + i*dist
-                                bins.append(start)
-                            final_IV = self.__NUMprocess(goodN[clm],badN[clm],newFrame[clm],bins)
-                            if final_IV >1:
-                                continue
-                            elif final_IV >0.1:
-                                pass
+##                        Maxmum = float(newFrame[clm].max())
+##                        Minmum = float(newFrame[clm].min())
+##                        dist = float((Maxmum - Minmum)/self.k)
+##                        if (Maxmum - Minmum) < self.k:
+##                            final_IV,newFrame[clm],reflag = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
+##                        else:
+##                            if dist == 0:
+##                                self.dropdf[clm] = newFrame[clm]
+##                                print clm,' drop  with 0 dist '
+##                                del newFrame[clm]
+##                                continue
+##                            bins =[]
+##                            for i in range(0,self.k+1):
+##                                start = Minmum + i*dist
+##                                bins.append(start)
+##                            final_IV = self.__NUMprocess(goodN[clm],badN[clm],newFrame[clm],bins)
+##                            if final_IV >1:
+##                                continue
+##                            elif final_IV >0.1:
+##                                pass
 
-                    lst.append(final_IV)
+##                    lst.append(final_IV)
         return lst,newFrame,self.dropdf
 
 if __name__=='__main__':
@@ -257,12 +265,13 @@ if __name__=='__main__':
     MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
     MasterFileType = FilePath + 'TypeState.csv'
 
-    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0)
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0,0.75)
     IV, DF, droped = ivpro.IVFunc()
+    
     #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
     # 
-    #TESTDATA = Dateprocess(Master, TEST, TypeStatement,20,1,0)
-    #DF_test,droped_Test = Dateprocess.handel_test(TESTDATA)
+    #TESTDATA = Dateprocess(Master, TEST, TypeStatement,20,1,0,0.75)
+    DF_test,droped_Test = Dateprocess.handel_test(TESTDATA)
     #print DF
     DF.to_csv('../Output/S1/statistics/seleted_Master_Train.csv', encoding="gb18030")
     droped.to_csv('../Output/S1/statistics/droped_Master_Train.csv', encoding="gb18030")

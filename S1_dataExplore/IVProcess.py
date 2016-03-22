@@ -31,17 +31,37 @@ class IVProcess:
         self.case = case
         self.timeoption = timeoption
         self.NaNRate = NaNRate
-        self.ori_train_file = self.__replacenull(self.ori_train_file)
-        self.ori_test_file = self.__replacenull(self.ori_test_file)
+        self.__replacenull()
         print 'all -1 has been replaced'
-        self.__resetType(self.ori_train_file,self.ori_type_file)
-        self.__resetType(self.ori_test_file,self.ori_type_file)
+        self.__resetType()
         print 'resetType finished'
    
 
-    def __replacenull(self,ori_file):
-        ori_file = ori_file.replace(-1, np.nan)
-        return ori_file
+    def __replacenull(self):
+        self.ori_train_file = self.ori_train_file.replace(-1, np.nan)
+        self.ori_test_file = self.ori_test_file.replace(-1, np.nan)
+
+
+    def __resetType(self):       
+        typetmp = self.ori_type_file.dropna(axis=1)
+        se = typetmp.set_index('Idx')
+        ser = pd.Series(se['Index'],index = typetmp['Idx'])
+        for i in ser.index:
+            if ser[i]=='Categorical':
+                ser[i] = 'object'
+            elif ser[i]=='Numerical':
+                ser[i] = 'float64'
+            else:
+                pass
+            try:
+                 self.ori_train_file[i] =  self.ori_train_file[i].astype(ser[i])
+            except:
+                 pass
+            try:
+                 self.ori_test_file[i] =  self.ori_test_file[i].astype(ser[i])
+            except:
+                pass
+
 
     def __WOEFUNC(self, goodpct, badpct):
         pct_ratio = goodpct/badpct
@@ -170,25 +190,7 @@ class IVProcess:
 
 
 
-    def __resetType(self,ori_file,ori_type_file):
-        typetmp = ori_type_file.dropna(axis=1)
-        se = typetmp.set_index('Idx')
-        ser = pd.Series(se['Index'],index = typetmp['Idx'])
-        for i in ser.index:
-            if ser[i]=='Categorical':
-                ser[i] = 'object'
-            elif ser[i]=='Numerical':
-                try:
-                    if ori_file[i].dtypes == 'object':
-                        ser[i] = 'float64'
-                    else:pass
-                except KeyError:pass
-            else:pass
-            try:
-                ori_file[i] = ori_file[i].astype(ser[i])
-            except:pass
 
-        return ori_file
 
 
     def IVFunc(self):#case defined in Objectprocess ,1 only replace unicoid ,2 replace all
@@ -201,6 +203,7 @@ class IVProcess:
             if clm == 'target':
                 continue
             elif clm == 'ListingInfo':
+                
                 if self.timeoption == 0:
                     newFrame[clm] = self.__dateprocess(newFrame[clm])
                 else:continue
@@ -211,27 +214,29 @@ class IVProcess:
                     self.dropdf[clm] = newFrame[clm]
                     del newFrame[clm]
                     continue
-
                 else:
                     if newFrame[clm].dtypes =='object':
                         newFrame[clm] = self.__replaceunicode(newFrame[clm])
                         final_IV,newFrame[clm],reflag = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
+                        #print newFrame[clm].dtypes
+                        #print newFrame[clm]
                         if reflag == 1:
                              self.replacedclm[clm] = newFrame[clm]
                         else:pass
                         if final_IV >1:
+                            print 'final_IV larger than 1',clm
                             continue
 
                     ######## numerical#######
                     else:
                         continue
-        print newFrame.dtypes
-        imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
-        imp.fit(newFrame)
-        test = imp.transform(newFrame)
-        print newFrame.shape,test.shape
-        newFrame[clm] = test
-                        
+##        print newFrame.dtypes
+##        imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
+##        imp.fit(newFrame)
+##        test = imp.transform(newFrame)
+##        print newFrame.shape,test.shape
+##        newFrame[clm] = test
+##                        
                         ####### Discretization
 ##                        Maxmum = float(newFrame[clm].max())
 ##                        Minmum = float(newFrame[clm].min())

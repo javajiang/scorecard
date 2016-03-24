@@ -1,4 +1,3 @@
-
 #coding = 'utf-8'
 """data explore for raw datasheet"""
 __author__ = "changandao&jiangweiwu"
@@ -6,7 +5,7 @@ __date__   = "2016.3.8"
 
 import numpy as np
 import pandas as pd
-from sklearn import *
+#from sklearn import *
 #from sklearn.preprocessing import Imputer
 import matplotlib.pyplot as plt
 from pandas import datetime
@@ -16,6 +15,11 @@ class IVProcess:
     corresWOE = pd.DataFrame()
     replacedclm = pd.DataFrame()
     dropdf = pd.DataFrame()
+    tmpWOE = pd.DataFrame()
+    tmptotal = pd.DataFrame()
+    Iv_object = pd.DataFrame()
+    WOE = pd.DataFrame()
+    #dateser = pd.Series()
     ori_train_file = ''
     ori_type_file = ''
     ori_test_file = ''
@@ -23,6 +27,8 @@ class IVProcess:
     case = 0
     timeoption = 0
     NaNRate = 0
+    IV = 0
+    reflag = 0
     def __init__(self, ori_train_file_name, ori_test_file_name, ori_type_file_name, k, case, timeoption,NaNRate):
         self.ori_train_file = pd.read_csv(ori_train_file_name,encoding="gb18030")
         self.ori_type_file = pd.read_csv(ori_type_file_name,encoding="gb18030")
@@ -63,31 +69,29 @@ class IVProcess:
                 pass
 
 
-    def __WOEFUNC(self, goodpct, badpct):
+    def __WOEcal(self, goodpct, badpct):
         pct_ratio = goodpct/badpct
         pct_ratio =  pct_ratio.fillna(0.)
         npratio = np.array(pct_ratio)
-        WOE = np.log(npratio)
-        WOE = pd.Series(WOE)
-        return WOE
+        self.WOE = np.log(npratio)
+        self.WOE = pd.Series(self.WOE)
 
 
-    def __IVCAL(self, good,bad):
+    def __IVcal(self, good,bad):
         goodall = good.sum()
         badall = bad.sum()
         pct_good = good/goodall
         pct_bad = bad/badall
-        WOEvalue = self.__WOEFUNC(pct_good,pct_bad)
+        self.__WOEcal(pct_good,pct_bad)
         pct_diff = pct_good-pct_bad
         pct_diff =  pct_diff.fillna(0.)
         npdiff = np.array(pct_diff)
-        iv = npdiff*WOEvalue
+        iv = npdiff*self.WOE
         ivser = pd.Series(iv)
-        IV = ivser.sum()
-        return IV
+        self.IV = ivser.sum()
 
 
-    def __Objectprocess(self, goodser, badser,totalser):##case =1 replace unicode ,case = 2 replace all
+    def __Objectprocess(self, goodser, badser, totalser):##case =1 replace unicode ,case = 2 replace all
         goodOValue = goodser.value_counts()
         badOValue = badser.value_counts()
         totalOvalue = totalser.value_counts()
@@ -103,36 +107,33 @@ class IVProcess:
         bad_pct = badtmp/badtmp.sum()
         totalOvalue = totalOvalue.sort_index()
         self.corresWOE =totalOvalue.copy()
-        Woe_of_O = self.__WOEFUNC(good_pct,bad_pct)
-        self.corresWOE[:] = Woe_of_O###coresponding woe
-        tmptotal = totalser.copy()###original series
-        tmptotal,shouldreplace = self.__repalcewoe(tmptotal)
-        IV_Objekt = self.__IVCAL(goodtmp,badtmp)
-        return IV_Objekt,tmptotal,shouldreplace
+        self.tmpWOE = self.__WOEcal(good_pct,bad_pct)
+        self.corresWOE[:] = self.tmpWOE###coresponding woe
+        self.tmptotal = totalser.copy()###original series
+        self.__repalcewoe()
+        self.IV = self.__IVcal(goodtmp,badtmp)
+        return self.tmptotal
 
 
-    def __repalcewoe(self,oriseries):##replace unicode with woe
-        shouldreplace = 0
-        def _case1(tmp,ser):
-            totalidx = ser.index
-            for i in tmp.index:
-                if type(tmp[i]) == unicode:
-                    idx = totalidx.get_loc(tmp[i])
-                    tmp[i] = ser[idx]
-                    shouldreplace = 1
-            return tmp
-        def _case2(tmp,ser):
-            totalidx = ser.index
-            for i in tmp.index:
+    def __repalcewoe(self):##replace unicode with woe
+        def _case1():
+            totalidx = self.corresWOE.index
+            for i in self.tmptotal.index:
+                if type(self.tmptotal[i]) == unicode:
+                    idx = totalidx.get_loc(self.tmptotal[i])
+                    self.tmptotal[i] = self.corresWOE[idx]
+                    self.reflag = 1
+        def _case2():
+            totalidx = self.corresWOE.index
+            for i in self.tmptotal.index:
                 #if type(tmptotal[i]) == unicode:
-                idx = totalidx.get_loc(tmp[i])
-                tmp[i] = ser[idx]
-            return tmp
+                idx = totalidx.get_loc(self.tmptotal[i])
+                self.tmptotal[i] = self.corresWOE[idx]
         if self.case == 1:
-            oriseries = _case1(oriseries,self.corresWOE)
+            _case1()
         elif self.case == 2:
-            oriseries = _case2(oriseries,self.corresWOE)
-        return oriseries,shouldreplace###return the replaced series and flag of relace all or only unicode
+            _case2()
+        #return oriseries,shouldreplace###return the replaced series and flag of relace all or only unicode
 
     def __NUMprocess(self, goodser, badser, totalser,bin):
         totalcuts = pd.cut(totalser, bin, right = True, include_lowest = True)
@@ -149,8 +150,7 @@ class IVProcess:
         badsum = badsum.sort_index()# sort the index
         badsum[(totalsum==0) != (badsum == 0)] = 1
         goodsum[(totalsum==0) != (goodsum == 0)] = 1
-        IV_NUM = self.__IVCAL(goodsum, badsum)
-        return IV_NUM
+        self.__IVcal(goodsum, badsum)
 
 
     def __dateprocess(self, dateseries):
@@ -158,13 +158,12 @@ class IVProcess:
         dateser = dateser-dateser.min()
         return dateser
 
-
     def __replaceunicode(self,repalceser):
         flag = 0
         for i in repalceser.index:
             if type(repalceser.ix[i]) == unicode:
                 flag=1
-            else:flag = 0
+            #else:flag = 0
         if flag == 1:
             repalceser = repalceser.fillna(u'no') #option with D E
         else:pass
@@ -190,26 +189,25 @@ class IVProcess:
 
 
 
-
-
-
     def IVFunc(self):#case defined in Objectprocess ,1 only replace unicoid ,2 replace all
         lst = []
+        count = 0
         final_IV = 0
         newFrame = self.ori_train_file.set_index('Idx')
+        testFrame = self.ori_test_file.set_index('Idx')
         goodN = newFrame.groupby('target').get_group(1)
         badN = newFrame.groupby('target').get_group(0)
         for clm in newFrame.columns:
             if clm == 'target':
                 continue
             elif clm == 'ListingInfo':
-                
                 if self.timeoption == 0:
                     newFrame[clm] = self.__dateprocess(newFrame[clm])
+                    testFrame[clm] = self.__dateprocess(testFrame[clm])
                 else:continue
             else:
                 rate = float(len(newFrame[clm].dropna()))/30000
-                if rate<self.NaNRate:
+                if rate < self.NaNRate:
                     print clm,' drop ',str(rate)
                     self.dropdf[clm] = newFrame[clm]
                     del newFrame[clm]
@@ -217,13 +215,14 @@ class IVProcess:
                 else:
                     if newFrame[clm].dtypes =='object':
                         newFrame[clm] = self.__replaceunicode(newFrame[clm])
-                        final_IV,newFrame[clm],reflag = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
+                        newFrame[clm] = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
                         #print newFrame[clm].dtypes
                         #print newFrame[clm]
-                        if reflag == 1:
-                             self.replacedclm[clm] = newFrame[clm]
+                        if self.reflag == 1:
+                            newFrame[clm] = newFrame[clm].astype('float64')
+                            self.replacedclm[clm] = newFrame[clm]
                         else:pass
-                        if final_IV >1:
+                        if self.IV >1:
                             print 'final_IV larger than 1',clm
                             continue
 
@@ -248,6 +247,41 @@ class IVProcess:
 ##                                self.dropdf[clm] = newFrame[clm]
 ##                                print clm,' drop  with 0 dist '
 ##                                del newFrame[clm]
+##                                continue
+##                            bins =[]
+##                            for i in range(0,self.k+1):
+##                                start = Minmum + i*dist
+##                                bins.append(start)
+##                            final_IV = self.__NUMprocess(goodN[clm],badN[clm],newFrame[clm],bins)
+##                            if final_IV >1:
+##                                continue
+##                            elif final_IV >0.1:
+##                                pass
+
+##                    lst.append(final_IV)
+        return lst,newFrame,self.dropdf
+
+if __name__=='__main__':
+    FilePath = '../data/'
+    Dataset = 'Training Set/'
+    Testset = 'Test Set/'
+    MasterTrainFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
+    MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
+    MasterFileType = FilePath + 'TypeState.csv'
+
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0,0.75)
+    IV, DF, droped = ivpro.IVFunc()
+    
+    #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
+    # 
+    #TESTDATA = Dateprocess(Master, TEST, TypeStatement,20,1,0,0.75)
+    DF_test,droped_Test = Dateprocess.handel_test(TESTDATA)
+    #print DF
+    DF.to_csv('../Output/S1/statistics/seleted_Master_Train.csv', encoding="gb18030")
+    droped.to_csv('../Output/S1/statistics/droped_Master_Train.csv', encoding="gb18030")
+    DF_test.to_csv('../Output/S1/statistics/seleted_Master_Train.csv', encoding="gb18030")
+    droped_Test.to_csv('../Output/S1/statistics/droped_Master_Test.csv', encoding="gb18030")
+    #droped_test.to_csv('../Output/S1/statistics/droped_Master.csv', encoding="gb18030")
 ##                                continue
 ##                            bins =[]
 ##                            for i in range(0,self.k+1):

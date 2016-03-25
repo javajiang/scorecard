@@ -269,7 +269,7 @@ if __name__=='__main__':
     MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
     MasterFileType = FilePath + 'TypeState.csv'
 
-    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0,0.75)
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0,0.7)
     IV, DF, droped = ivpro.IVFunc()
     
     #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)

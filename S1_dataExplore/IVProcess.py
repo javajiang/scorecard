@@ -38,6 +38,7 @@ class IVProcess:
         self.case = case
         self.timeoption = timeoption
         self.NaNRate = NaNRate
+        self.IVthreshhold = IVthreshhold
         self.__replacenull()
         print 'all -1 has been replaced'
         self.__resetType()
@@ -113,7 +114,8 @@ class IVProcess:
         self.corresWOE[:] = self.WOE###coresponding woe
         self.tmptotal = totalser.copy()###original series
         self.tmptotal = self.__repalceWOE(self.tmptotal)
-        self.IV = self.__IVcal(goodtmp,badtmp)
+        self.__IVcal(goodtmp,badtmp)
+        print self.IV
         return self.tmptotal
 
 
@@ -175,19 +177,6 @@ class IVProcess:
         else:pass
         return repalceser
 
-    def __ImputeNUM(self,oriser,transformedser):
-        print oriser
-        oriser = oriser.astype('float64')
-        oriser = oriser.fillna(np.nan)
-        #oriarray = np.array(oriser)
-        #transformedarray = np.array(transformedser)
-        #print transformedarray,transformedarray.shape
-        imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
-        imp.fit(oriser)
-        transformed = imp.transform(transformedser)
-        print transformed,transformed.shape
-        outser = pd.Series(transformed)
-        print outser
     
     
     '''def __del_low_IV(self,train,test):
@@ -230,7 +219,6 @@ class IVProcess:
                         newFrame[clm] = self.__replaceunicode(newFrame[clm])
                         testFrame[clm] = self.__replaceunicode(testFrame[clm])
                         newFrame[clm] = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
-                        
                         tmpser = testFrame[clm].copy()
                         testFrame[clm] = self.__repalceWOE(tmpser)
                         for i in testFrame[clm].index:
@@ -238,21 +226,19 @@ class IVProcess:
                                 testFrame[clm] = testFrame[clm].replace(testFrame[i,clm],self.corresWOE[u'no'])
                         #if self.reflag == 1:
                         newFrame[clm] = newFrame[clm].astype('float64')
-                        #self.replacedclm[clm] = newFrame[clm]
-                        if self.IV >1:
-                            print clm, 'bug'
-                            continue
-                        elif self.IV < self.IVthreshhold:
+                        if self.IV < self.IVthreshhold:
                             self.dropdf[clm] = newFrame[clm]
-                            print clm,' drop  with low IV',self.IV
+                            print clm,' drop  with low IV ',self.IV
                             del newFrame[clm]
                             del testFrame[clm]
+                        #self.replacedclm[clm] = newFrame[clm]
+                        
 
                     ######## numerical#######
                     else:
-                        #newFrame[:,clm] = self.__ImputeNUM(newFrame[clm],newFrame[clm])
-                        #testFrame[:,clm] = self.__ImputeNUM(newFrame[clm],testFrame[clm])
-
+                        train_mean = newFrame.mean()
+                        newFrame[clm]=newFrame[clm].fillna(train_mean)
+                        testFrame[clm]=testFrame[clm].fillna(train_mean)
 ##                        
                         ####### Discretization
                         Maxmum = float(newFrame[clm].max())
@@ -266,16 +252,12 @@ class IVProcess:
                             continue 
                         elif (Maxmum - Minmum) < self.k:
                             newFrame[clm] = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
-                            if self.IV >1:
-                                print clm, 'bug'
-                                continue
-                            elif self.IV < self.IVthreshhold:
+                            if self.IV < self.IVthreshhold:
                                 self.dropdf[clm] = newFrame[clm]
                                 print clm,' drop  with low IV',self.IV
                                 del newFrame[clm]
                                 del testFrame[clm]
                         else:
-                            
                             bins =[]
                             for i in range(0,self.k+1):
                                 start = Minmum + i*dist
@@ -300,7 +282,7 @@ if __name__=='__main__':
     MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
     MasterFileType = FilePath + 'TypeState.csv'
 
-    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0,0.75,0.1)
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,20,1,0,0.75,0.05)
     IV, DF, DF_test, droped = ivpro.IVFunc()
     
     #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)

@@ -290,9 +290,9 @@ if __name__=='__main__':
     #TESTDATA = Dateprocess(Master, TEST, TypeStatement,20,1,0,0.75)
     #DF_test,droped_Test = Dateprocess.handel_test(TESTDATA)
     #print DF
-    DF.to_csv('../Output/S1/statistics/seleted_Master_Train.csv', encoding="gb18030")
-    droped.to_csv('../Output/S1/statistics/droped_Master_Train.csv', encoding="gb18030")
-    DF_test.to_csv('../Output/S1/statistics/seleted_Master_Test.csv', encoding="gb18030")
+    DF.to_csv('../Output/S1/seleted_Master_Train.csv', encoding="gb18030")
+    droped.to_csv('../Output/S1/droped_Master_Train.csv', encoding="gb18030")
+    DF_test.to_csv('../Output/S1/seleted_Master_Test.csv', encoding="gb18030")
     print 'the end'
     #droped_Test.to_csv('../Output/S1/statistics/droped_Master_Test.csv', encoding="gb18030")
     #droped_test.to_csv('../Output/S1/statistics/droped_Master.csv', encoding="gb18030")

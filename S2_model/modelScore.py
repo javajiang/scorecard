@@ -48,18 +48,23 @@ class modelScore:
     # 
         trainSet = pd.read_csv(self.trainFileName,encoding=self.codingType)
         self.testXData = pd.read_csv(self.testFileName,encoding=self.codingType)
+        print self.testXData.shape
         self.trainYLabel = trainSet['target']
         self.trainXData = trainSet.drop('target',axis=1)
         
-        self.trainXData = self.trainXData.drop('ListingInfo',axis=1)
-        self.testXData = self.testXData.drop('ListingInfo',axis=1)
+        #self.trainXData = self.trainXData.drop('ListingInfo',axis=1)
+        #self.testXData = self.testXData.drop('ListingInfo',axis=1)
         imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
         imp.fit(self.trainXData)
         self.trainXData = imp.transform(self.trainXData)
-        #self.testXData = imp.transform(self.testXData)
+        print self.trainXData.shape
+        imp = preprocessing.Imputer(missing_values='NaN', strategy='mean', axis=0)
+        imp.fit(self.testXData)
+        self.testXData = imp.transform(self.testXData)
+        print self.testXData.shape
      
-    def modelTraining(self):
-        skf = cross_validation.StratifiedKFold(self.trainYLabel.values,50)
+    def crossValidation(self):
+        skf = cross_validation.StratifiedKFold(self.trainYLabel.values,10)
         for train_index, test_index in skf:
             trainXData_CV_Train = self.trainXData[train_index]
             trainXData_CV_Test = self.trainXData[test_index]
@@ -82,9 +87,9 @@ class modelScore:
             cost_time = time() - cost_time
             #print cost_time
 
-            res_l1_LR_list = [0,0,0]
-            for i,C in enumerate((0.006,0.005,0.004)):
-                lm_LR = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.005,solver='liblinear',max_iter=200)
+            res_l1_LR_list = [0,0,0,0]
+            for i,C in enumerate((0.05,0.01,0.006)):
+                lm_LR = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.05,solver='liblinear',max_iter=300)
                 lm_LR.fit(new_trainXData_CV_Train, trainYLabel_CV_Train)
                 y_pred_lm_LR = lm_LR.predict_proba(new_trainXData_CV_Test)[:, 1]
                 res_y_pred_lm_LR = metrics.roc_auc_score(trainYLabel_CV_Test, y_pred_lm_LR)
@@ -93,26 +98,29 @@ class modelScore:
             #print np.average(res_l1_LR_list)
         
 
-        
-        #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4) 
-        #grd.fit(New_X_Data, Y_Label)
-        #temp_X_Train = grd.apply(New_X_Data)[:, :, 0]
-        #temp_X_Test = grd.apply(New_Test_Data)[:, :, 0]
-        #grd_enc = preprocessing.OneHotEncoder()
-        #grd_enc.fit(temp_X_Train)
-        #New_temp_X_Train = grd_enc.transform(temp_X_Train)
-        #New_temp_X_Test = grd_enc.transform(temp_X_Test)
-        #grd_lm = linear_model.LogisticRegression(C=0.06,penalty='l1',tol=0.005,solver='liblinear',max_iter=400)
-        #grd_lm.fit(New_temp_X_Train, Y_Label)
-        #New_Test_Data_res = grd_lm.predict_proba(New_temp_X_Test)
-        #Total_res = np.column_stack((New_Test_Data[:,0].astype(int),New_Test_Data_res[:,1]))
-        #np.savetxt('2.csv',Total_res,fmt='%.6f')
+    def TrainAndScore(self):
+        #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4,learning_rate=0.005)
+        grd = ensemble.GradientBoostingClassifier(n_estimators=100,max_depth=3,learning_rate=0.5)
+        grd.fit(self.trainXData, self.trainYLabel)
+        temp_X_Train = grd.apply(self.trainXData)[:, :, 0]
+        temp_X_Test = grd.apply(self.testXData)[:, :, 0]
+        grd_enc = preprocessing.OneHotEncoder()
+        grd_enc.fit(temp_X_Train)
+        New_temp_X_Train = grd_enc.transform(temp_X_Train)
+        New_temp_X_Test = grd_enc.transform(temp_X_Test)
+        #grd_lm = linear_model.LogisticRegression(C=0.005,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
+        grd_lm = linear_model.LogisticRegression(C=0.5,penalty='l1',tol=0.5,solver='liblinear',max_iter=100)
+        grd_lm.fit(New_temp_X_Train, Y_Label)
+        New_Test_Data_res = grd_lm.predict_proba(New_temp_X_Test)
+        Total_res = np.column_stack((self.testXData[:,0].astype(int),New_Test_Data_res[:,1]))
+        np.savetxt(self.scoreFileName,Total_res,fmt='%.6f')
 	
 
 	
 	
 if __name__=="__main__":
-    test_modelScore = modelScore('../Output/S1/statistics/seleted_Master.csv',"../data/Test Set/PPD_Master_GBK_2_Test_Set.csv",'../submit/test.csv','gb18030')
+    test_modelScore = modelScore('../Output/S1/seleted_Master.csv',"../Output/S1/seleted_Master_Test.csv",'../submit/test.csv','gb18030')
     test_modelScore.readData()
-    test_modelScore.modelTraining()
+    test_modelScore.crossValidation()
+    test_modelScore.TrainAndScore()
 	

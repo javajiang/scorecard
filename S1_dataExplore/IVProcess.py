@@ -236,10 +236,7 @@ class IVProcess:
 
                     ######## numerical#######
                     else:
-                        train_mean = newFrame.mean()
-                        newFrame[clm]=newFrame[clm].fillna(train_mean)
-                        testFrame[clm]=testFrame[clm].fillna(train_mean)
-##                        
+                        ##                        
                         ####### Discretization
                         Maxmum = float(newFrame[clm].max())
                         Minmum = float(newFrame[clm].min())
@@ -271,6 +268,12 @@ class IVProcess:
                                 print clm,' drop  with low IV',self.IV
                                 del newFrame[clm]
                                 del testFrame[clm]
+                    try:
+                        train_mean = newFrame.mean()
+                        newFrame[clm]=newFrame[clm].fillna(train_mean)
+                        testFrame[clm]=testFrame[clm].fillna(train_mean)
+                    except KeyError:
+                        pass
                     lst.append(self.IV)
         return lst,newFrame,testFrame,self.dropdf
 

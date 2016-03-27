@@ -95,7 +95,7 @@ class modelScore:
                 y_pred_lm_LR = lm_LR.predict_proba(new_trainXData_CV_Test)[:, 1]
                 res_y_pred_lm_LR = metrics.roc_auc_score(trainYLabel_CV_Test, y_pred_lm_LR)
                 print i,res_y_pred_lm_LR
-                res_l1_LR_list[i] = res_l1_LR_list[i] + y_pred_lm_LR
+                res_l1_LR_list[i] = res_l1_LR_list[i] + res_y_pred_lm_LR
         print np.average(res_l1_LR_list)
         
 
@@ -110,7 +110,7 @@ class modelScore:
         grd_enc.fit(temp_X_Train)
         New_temp_X_Train = grd_enc.transform(temp_X_Train)
         New_temp_X_Test = grd_enc.transform(temp_X_Test)
-        grd_lm = linear_model.LogisticRegression(C=0.005,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
+        grd_lm = linear_model.LogisticRegression(C=0.05,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
         #grd_lm = linear_model.LogisticRegression(C=0.05,penalty='l1',tol=0.05,solver='liblinear',max_iter=100)
         print 'LogisticRegression'
         grd_lm.fit(New_temp_X_Train, self.trainYLabel)
@@ -124,6 +124,6 @@ class modelScore:
 if __name__=="__main__":
     test_modelScore = modelScore('../Output/S1/seleted_Master_Train.csv',"../Output/S1/seleted_Master_Test.csv",'../submit/test.csv','gb18030')
     test_modelScore.readData()
-    test_modelScore.crossValidation()
-    #test_modelScore.TrainAndScore()
+    #test_modelScore.crossValidation()
+    test_modelScore.TrainAndScore()
 	

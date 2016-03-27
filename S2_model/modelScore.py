@@ -119,7 +119,7 @@ class modelScore:
 	
 	
 if __name__=="__main__":
-    test_modelScore = modelScore('../Output/S1/seleted_Master.csv',"../Output/S1/seleted_Master_Test.csv",'../submit/test.csv','gb18030')
+    test_modelScore = modelScore('../Output/S1/seleted_Master_Train.csv',"../Output/S1/seleted_Master_Test.csv",'../submit/test.csv','gb18030')
     test_modelScore.readData()
     test_modelScore.crossValidation()
     test_modelScore.TrainAndScore()

@@ -64,7 +64,7 @@ class modelScore:
         print self.testXData.shape
      
     def crossValidation(self):
-        skf = cross_validation.StratifiedKFold(self.trainYLabel.values,50)
+        skf = cross_validation.StratifiedKFold(self.trainYLabel.values,20)
         res_l1_LR_list = [0,0,0]
         for train_index, test_index in skf:
             trainXData_CV_Train = self.trainXData[train_index]

@@ -74,7 +74,7 @@ class modelScore:
 
             cost_time = time()
             #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4,learning_rate=0.005) #test case learning_rate=0.01
-            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_leaf_nodes=200,learning_rate=0.005) #test case learning_rate=0.01
+            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_leaf_nodes=100,learning_rate=0.05) #test case learning_rate=0.01
             grd.fit(trainXData_CV_Train, trainYLabel_CV_Train)
             cost_time = time() - cost_time
             temp_trainXData_CV_Train = grd.apply(trainXData_CV_Train)[:, :, 0]
@@ -90,8 +90,8 @@ class modelScore:
             #print cost_time
 
             
-            for i,C in enumerate((0.05,0.01,0.005)):
-                lm_LR = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
+            for i,C in enumerate((0.06,0.05,0.04)):
+                lm_LR = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.05,solver='liblinear',max_iter=200)
                 lm_LR.fit(new_trainXData_CV_Train, trainYLabel_CV_Train)
                 y_pred_lm_LR = lm_LR.predict_proba(new_trainXData_CV_Test)[:, 1]
                 res_y_pred_lm_LR = metrics.roc_auc_score(trainYLabel_CV_Test, y_pred_lm_LR)

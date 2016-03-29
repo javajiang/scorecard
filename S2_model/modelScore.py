@@ -73,8 +73,8 @@ class modelScore:
             trainYLabel_CV_Test = self.trainYLabel[test_index]
 
             cost_time = time()
-            #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4,learning_rate=0.005) #test case learning_rate=0.01
-            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_leaf_nodes=100,learning_rate=0.05) #test case learning_rate=0.01
+            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=8,learning_rate=0.05) #test case learning_rate=0.01
+            #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_leaf_nodes=100,learning_rate=0.05) #test case learning_rate=0.01
             grd.fit(trainXData_CV_Train, trainYLabel_CV_Train)
             cost_time = time() - cost_time
             temp_trainXData_CV_Train = grd.apply(trainXData_CV_Train)[:, :, 0]

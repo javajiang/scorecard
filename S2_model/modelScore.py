@@ -64,7 +64,8 @@ class modelScore:
         print self.testXData.shape
      
     def crossValidation(self):
-        skf = cross_validation.StratifiedKFold(self.trainYLabel.values,10)
+        skf = cross_validation.StratifiedKFold(self.trainYLabel.values,20)
+        res_l1_LR_list = [0,0,0]
         for train_index, test_index in skf:
             trainXData_CV_Train = self.trainXData[train_index]
             trainXData_CV_Test = self.trainXData[test_index]
@@ -72,7 +73,8 @@ class modelScore:
             trainYLabel_CV_Test = self.trainYLabel[test_index]
 
             cost_time = time()
-            grd = ensemble.GradientBoostingClassifier(n_estimators=200,max_depth=3,learning_rate=0.05) #test case learning_rate=0.01
+            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=5,learning_rate=0.05) #test case learning_rate=0.01
+            #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_leaf_nodes=100,learning_rate=0.05) #test case learning_rate=0.01
             grd.fit(trainXData_CV_Train, trainYLabel_CV_Train)
             cost_time = time() - cost_time
             temp_trainXData_CV_Train = grd.apply(trainXData_CV_Train)[:, :, 0]
@@ -87,30 +89,32 @@ class modelScore:
             cost_time = time() - cost_time
             #print cost_time
 
-            res_l1_LR_list = [0,0,0,0]
-            for i,C in enumerate((0.05,0.01,0.006)):
-                lm_LR = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.05,solver='liblinear',max_iter=300)
+            
+            for i,C in enumerate((0.06,0.05,0.04)):
+                lm_LR = linear_model.LogisticRegression(C=C,penalty='l1',tol=0.05,solver='liblinear',max_iter=200)
                 lm_LR.fit(new_trainXData_CV_Train, trainYLabel_CV_Train)
                 y_pred_lm_LR = lm_LR.predict_proba(new_trainXData_CV_Test)[:, 1]
                 res_y_pred_lm_LR = metrics.roc_auc_score(trainYLabel_CV_Test, y_pred_lm_LR)
                 print i,res_y_pred_lm_LR
-                res_l1_LR_list[i] = res_l1_LR_list[i] + y_pred_lm_LR
-            #print np.average(res_l1_LR_list)
+                res_l1_LR_list[i] = res_l1_LR_list[i] + res_y_pred_lm_LR
+        print np.average(res_l1_LR_list)
         
 
     def TrainAndScore(self):
-        #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4,learning_rate=0.005)
-        grd = ensemble.GradientBoostingClassifier(n_estimators=100,max_depth=3,learning_rate=0.5)
+        grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=5,learning_rate=0.005)
+        #grd = ensemble.GradientBoostingClassifier(n_estimators=100,max_depth=3,learning_rate=0.05)
         grd.fit(self.trainXData, self.trainYLabel)
         temp_X_Train = grd.apply(self.trainXData)[:, :, 0]
         temp_X_Test = grd.apply(self.testXData)[:, :, 0]
         grd_enc = preprocessing.OneHotEncoder()
+        print 'OneHotEncoder'
         grd_enc.fit(temp_X_Train)
         New_temp_X_Train = grd_enc.transform(temp_X_Train)
         New_temp_X_Test = grd_enc.transform(temp_X_Test)
-        #grd_lm = linear_model.LogisticRegression(C=0.005,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
-        grd_lm = linear_model.LogisticRegression(C=0.5,penalty='l1',tol=0.5,solver='liblinear',max_iter=100)
-        grd_lm.fit(New_temp_X_Train, Y_Label)
+        grd_lm = linear_model.LogisticRegression(C=0.05,penalty='l1',tol=0.005,solver='liblinear',max_iter=500)
+        #grd_lm = linear_model.LogisticRegression(C=0.05,penalty='l1',tol=0.05,solver='liblinear',max_iter=100)
+        print 'LogisticRegression'
+        grd_lm.fit(New_temp_X_Train, self.trainYLabel)
         New_Test_Data_res = grd_lm.predict_proba(New_temp_X_Test)
         Total_res = np.column_stack((self.testXData[:,0].astype(int),New_Test_Data_res[:,1]))
         np.savetxt(self.scoreFileName,Total_res,fmt='%.6f')
@@ -121,6 +125,6 @@ class modelScore:
 if __name__=="__main__":
     test_modelScore = modelScore('../Output/S1/seleted_Master_Train.csv',"../Output/S1/seleted_Master_Test.csv",'../submit/test.csv','gb18030')
     test_modelScore.readData()
-    test_modelScore.crossValidation()
+    #test_modelScore.crossValidation()
     test_modelScore.TrainAndScore()
 	

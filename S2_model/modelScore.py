@@ -73,7 +73,7 @@ class modelScore:
             trainYLabel_CV_Test = self.trainYLabel[test_index]
 
             cost_time = time()
-            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=8,learning_rate=0.05) #test case learning_rate=0.01
+            grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=5,learning_rate=0.05) #test case learning_rate=0.01
             #grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_leaf_nodes=100,learning_rate=0.05) #test case learning_rate=0.01
             grd.fit(trainXData_CV_Train, trainYLabel_CV_Train)
             cost_time = time() - cost_time
@@ -101,7 +101,7 @@ class modelScore:
         
 
     def TrainAndScore(self):
-        grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=4,learning_rate=0.005)
+        grd = ensemble.GradientBoostingClassifier(n_estimators=300,max_depth=5,learning_rate=0.005)
         #grd = ensemble.GradientBoostingClassifier(n_estimators=100,max_depth=3,learning_rate=0.05)
         grd.fit(self.trainXData, self.trainYLabel)
         temp_X_Train = grd.apply(self.trainXData)[:, :, 0]
@@ -125,6 +125,6 @@ class modelScore:
 if __name__=="__main__":
     test_modelScore = modelScore('../Output/S1/seleted_Master_Train.csv',"../Output/S1/seleted_Master_Test.csv",'../submit/test.csv','gb18030')
     test_modelScore.readData()
-    test_modelScore.crossValidation()
-    #test_modelScore.TrainAndScore()
+    #test_modelScore.crossValidation()
+    test_modelScore.TrainAndScore()
 	

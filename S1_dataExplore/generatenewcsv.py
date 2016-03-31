@@ -13,7 +13,13 @@ Testadd2file = FilePath + 'testadd2.csv'
 
 MasterTrain = pd.read_csv(MasterTrainFile,encoding="gb18030")
 MasterTest = pd.read_csv(MasterTestile,encoding="gb18030")
-#print MasterTrain
+
+MasterTrain = MasterTrain.sort_values(by='Idx')
+MasterTest = MasterTest.sort_values(by='Idx')
+
+MasterTrain = MasterTrain.set_index('Idx')
+MasterTest = MasterTest.set_index('Idx')
+
 Trainadd1 = pd.read_csv(Trainadd1file,encoding="gb18030")
 Trainadd2 = pd.read_csv(Trainadd2file,encoding="gb18030")
 Testadd1 = pd.read_csv(Testadd1file,encoding="gb18030")
@@ -21,26 +27,17 @@ Testadd2 = pd.read_csv(Testadd2file,encoding="gb18030")
 
 Trainadd = Trainadd1.join(Trainadd2.ix[:,1:])
 Testadd = Testadd1.join(Testadd2.ix[:,1:])
-#print Trainadd
-#print MasterTrain
-#Trainadd = Trainadd.set_index('Unnamed: 0')
-#Testadd = Testadd.set_index('Unnamed: 0')
+Trainadd = Trainadd.set_index('Unnamed: 0')
+Testadd = Testadd.set_index('Unnamed: 0')
+
 print MasterTrain.shape,Trainadd.shape
 newMastertrain = pd.concat([MasterTrain, Trainadd], axis=1)
-#print newMastertrain
+newMastertest = pd.concat([MasterTest, Testadd], axis=1)
 
-print MasterTrain.ix[:,0]
-print Trainadd1.ix[:,0]
-lacked = []
-has = []
-#newframe = pd.DataFrame()
-for idx in MasterTrain.ix[:,0]:
-    if idx in Trainadd1.ix[:,0]:
-        #print idx
-        has.append(idx)
-    else:
-        #print idx
-        lacked.append(idx)
+newMastertrain = newMastertrain.reset_index()
+newMastertest = newMastertest.reset_index()
 
-#testhas,testlack = generate_new(MasterTest,Testadd)
-print len(has),len(lacked)
+newMastertrain.to_csv('../Output/S1/newtrain.csv',encoding='gb18030')
+newMastertest.to_csv('../Output/S1/newtest.csv',encoding='gb18030')
+
+

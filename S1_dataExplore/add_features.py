@@ -14,6 +14,10 @@ Trainadd1 = pd.read_csv(Trainadd1file,encoding="gb18030")
 Trainadd2 = pd.read_csv(Trainadd2file,encoding="gb18030")
 Testadd1 = pd.read_csv(Testadd1file,encoding="gb18030")
 Testadd2 = pd.read_csv(Testadd2file,encoding="gb18030")
+Trainadd1.fillna(0)
+Trainadd2.fillna(0)
+Testadd1.fillna(0)
+Testadd2.fillna(0)
 
 #print Trainadd1.shape
 
@@ -49,18 +53,18 @@ def generate_new_feature(newframe,column):
     currentid = 0
     typearray = np.array(lst)
     for i in df1.index:
-        currentid = i
+        currentid = df1.ix[i,0]
         rowplace = idxtype.index(df1.ix[i,0])
         clmplace = type.index(df1.ix[i,1])
         if currentid != preid:
+            
             if preid ==-1:
                 pass
             else:
                 finalarray[rowplace] = typearray
             typearray = np.array(lst)
-        #print i
         typearray[clmplace] += 1
-        preid = i
+        preid = df1.ix[i,0]
     finalframe = pd.DataFrame(finalarray)
     finalframe.index = idxtype
     finalframe.columns = type_name_lst
@@ -148,3 +152,4 @@ trainframe2.to_csv('../Output/S1/trainadd2.csv',encoding='gb18030')
 testframe1.to_csv('../Output/S1/testadd1.csv',encoding='gb18030')
 testframe2.to_csv('../Output/S1/testadd2.csv',encoding='gb18030')
 
+print 'that is the end'

@@ -22,19 +22,30 @@ Testadd2.fillna(0)
 #print Trainadd1.shape
 
 
-def generate_new_feature(newframe,column):
+def generate_new_feature(newframe,testframe,column):
     for clm in newframe.columns:
         if newframe[clm].dtypes == object:
             try:
                 newframe[clm] = newframe[clm].astype('int32')
             except:pass
+    for clm in testframe.columns:
+        if testframe[clm].dtypes == object:
+            try:
+                testframe[clm] = testframe[clm].astype('int32')
+            except:pass
     df1 = pd.DataFrame()
     df1['Idx'] = newframe['Idx']
     df1[column] = newframe[column]
 
+    df2 = pd.DataFrame()
+    df2['Idx'] = newframe['Idx']
+    df2[column] = newframe[column]
+
+
     typecounts = newframe[column].value_counts()
     type = typecounts.index
     type = sorted(type)
+
     lst = []
     type_name_lst = []
     for i in range(0,len(type)):
@@ -45,30 +56,41 @@ def generate_new_feature(newframe,column):
     idxcounts = df1['Idx'].value_counts()
     idxtype = idxcounts.index
     idxtype = sorted(idxtype)
+    testidxcounts = testframe[column].value_counts()
+    testidxtype = testidxcounts.index
+    testidxtype = sorted(testidxtype)
     print idxtype
 
-    finalframe = pd.DataFrame(index = idxtype, columns = type_name_lst)
-    finalarray = np.zeros(finalframe.shape)
-    preid = -1
-    currentid = 0
-    typearray = np.array(lst)
-    for i in df1.index:
-        currentid = df1.ix[i,0]
-        rowplace = idxtype.index(df1.ix[i,0])
-        clmplace = type.index(df1.ix[i,1])
-        if currentid != preid:
-            
-            if preid ==-1:
-                pass
-            else:
-                finalarray[rowplace] = typearray
-            typearray = np.array(lst)
-        typearray[clmplace] += 1
-        preid = df1.ix[i,0]
-    finalframe = pd.DataFrame(finalarray)
+    def _generate_new(df,typelst,idx,type_name,inilst):
+        finalframe = pd.DataFrame(index = idx, columns = type_name)
+        finalarray = np.zeros(finalframe.shape)
+        preid = -1
+        currentid = 0
+        typearray = np.array(inilst)
+        for i in df.index:
+            currentid = df.ix[i,0]
+            rowplace = idx.index(df.ix[i,0])
+            clmplace = typelst.index(df.ix[i,1])
+            if currentid != preid:
+                if preid ==-1:
+                    pass
+                else:
+                    finalarray[rowplace] = typearray
+                typearray = np.array(inilst)
+            typearray[clmplace] += 1
+            preid = df.ix[i,0]
+        return finalarray
+    #for i in df2.index:
+
+    newarray = _generate_new(df1,type,idxtype,type_name_lst,lst)
+    testarray = _generate_new(df2,type,testidxtype,type_name_lst,lst)
+    finalframe = pd.DataFrame(newarray)
+    testframe = pd.DataFrame(testarray)
     finalframe.index = idxtype
     finalframe.columns = type_name_lst
-    return finalframe
+    testframe.index = testidxtype
+    testframe.columns = type_name_lst
+    return finalframe,testframe
 
 
 def _str2id(str_list):
@@ -110,41 +132,34 @@ def generate_new_date(newframe, column):
     return date_info_ser
 
 
-#train1_logframe1 = generate_new_feature(Trainadd1, 'LogInfo1')
-#train1_logframe2 = generate_new_feature(Trainadd1, 'LogInfo2')
-#train1_logser3 = generate_new_date(Trainadd1,'LogInfo3')
-'''
-train2_Userupser = generate_new_str2id(Trainadd2,'UserupdateInfo1')
-Trainadd2['UserupdateInfo1'] = train2_Userupser.values
-train2_userframe1 = generate_new_feature(Trainadd2,'UserupdateInfo1')
-train2_userser2 = generate_new_date(Trainadd2,'UserupdateInfo2')
-
-#train1frame = train1_logframe1.join(train1_logframe2).join(train1_logser3)
-train2frame = train2_userframe1.join(train2_userser2)
-#train1frame.to_csv('../Output/S1/trainadd1',encoding='gb18030')
-train2frame.to_csv('../Output/S1/trainadd2',encoding='gb18030')'''
-
-def generate_newframe1(oldframe):
-    logframe1 = generate_new_feature(oldframe, 'LogInfo1')
-    logframe2 = generate_new_feature(oldframe, 'LogInfo2')
-    logser3 = generate_new_date(oldframe,'LogInfo3')
+def generate_newframe1(oldframe,oldtestframe):
+    logframe1,testlogframe1 = generate_new_feature(oldframe,oldtestframe, 'LogInfo1')
+    logframe2,testlogframe2 = generate_new_feature(oldframe,oldtestframe, 'LogInfo2')
+    logser3, = generate_new_date(oldframe,'LogInfo3')
+    testlogser3 = generate_new_date(oldtestframe)
     newframe = logframe1.join(logframe2).join(logser3)
-    return newframe
+    testnewframe = testlogframe1.join(testlogframe2).join(testlogser3)
+    return newframe,testnewframe
 
 
-def generate_newframe2(oldframe):
+def generate_newframe2(oldframe,oldtestframe):
     Userupser = generate_new_str2id(oldframe,'UserupdateInfo1')
+    testUserupser = generate_new_str2id(oldtestframe,'UserupdateInfo1')
     oldframe['UserupdateInfo1'] = Userupser.values
-    userframe1 = generate_new_feature(oldframe,'UserupdateInfo1')
+    oldtestframe['UserupdateInfo1'] = testUserupser.values
+    userframe1,testuserframe1 = generate_new_feature(oldframe,oldtestframe,'UserupdateInfo1')
     userser2 = generate_new_date(oldframe,'UserupdateInfo2')
+    testuserser2 = generate_new_date(oldtestframe,'UserupdateInfo2')
     newframe = userframe1.join(userser2)
-    return newframe
+    testnewframe = testuserframe1.join(testuserser2)
+    return newframe, testnewframe
 
-trainframe1 = generate_newframe1(Trainadd1)
-testframe1 = generate_newframe1(Testadd1)
 
-trainframe2 = generate_newframe2(Trainadd2)
-testframe2 = generate_newframe2(Testadd2)
+trainframe1,testframe1 = generate_newframe1(Trainadd1,Testadd1)
+#testframe1 = generate_newframe1(Testadd1)
+
+trainframe2,testframe2 = generate_newframe2(Trainadd2,Testadd2)
+#testframe2 = generate_newframe2(Testadd2)
 
 trainframe1.to_csv('../Output/S1/trainadd1.csv',encoding='gb18030')
 trainframe2.to_csv('../Output/S1/trainadd2.csv',encoding='gb18030')

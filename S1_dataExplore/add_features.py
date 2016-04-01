@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import time
 
 FilePath = '../data/'
 Dataset = 'Training Set/'
@@ -19,10 +20,9 @@ Trainadd2.fillna(0)
 Testadd1.fillna(0)
 Testadd2.fillna(0)
 
-#print Trainadd1.shape
-
 
 def generate_new_feature(newframe,testframe,column):
+    generatetime = time.clock()
     for clm in newframe.columns:
         if newframe[clm].dtypes == object:
             try:
@@ -56,7 +56,7 @@ def generate_new_feature(newframe,testframe,column):
     idxcounts = df1['Idx'].value_counts()
     idxtype = idxcounts.index
     idxtype = sorted(idxtype)
-    testidxcounts = testframe[column].value_counts()
+    testidxcounts = df2['Idx'].value_counts()
     testidxtype = testidxcounts.index
     testidxtype = sorted(testidxtype)
     print idxtype
@@ -90,7 +90,8 @@ def generate_new_feature(newframe,testframe,column):
     finalframe.columns = type_name_lst
     testframe.index = testidxtype
     testframe.columns = type_name_lst
-    return finalframe,testframe
+    generatetime = time.clock()-generatetime
+    return finalframe,testframe,generatetime
 
 
 def _str2id(str_list):
@@ -133,13 +134,13 @@ def generate_new_date(newframe, column):
 
 
 def generate_newframe1(oldframe,oldtestframe):
-    logframe1,testlogframe1 = generate_new_feature(oldframe,oldtestframe, 'LogInfo1')
-    logframe2,testlogframe2 = generate_new_feature(oldframe,oldtestframe, 'LogInfo2')
-    logser3, = generate_new_date(oldframe,'LogInfo3')
-    testlogser3 = generate_new_date(oldtestframe)
+    logframe1,testlogframe1,time1 = generate_new_feature(oldframe,oldtestframe, 'LogInfo1')
+    logframe2,testlogframe2,time2 = generate_new_feature(oldframe,oldtestframe, 'LogInfo2')
+    logser3 = generate_new_date(oldframe,'LogInfo3')
+    testlogser3 = generate_new_date(oldtestframe,'LogInfo3')
     newframe = logframe1.join(logframe2).join(logser3)
     testnewframe = testlogframe1.join(testlogframe2).join(testlogser3)
-    return newframe,testnewframe
+    return newframe,testnewframe,time1,time2
 
 
 def generate_newframe2(oldframe,oldtestframe):
@@ -147,24 +148,29 @@ def generate_newframe2(oldframe,oldtestframe):
     testUserupser = generate_new_str2id(oldtestframe,'UserupdateInfo1')
     oldframe['UserupdateInfo1'] = Userupser.values
     oldtestframe['UserupdateInfo1'] = testUserupser.values
-    userframe1,testuserframe1 = generate_new_feature(oldframe,oldtestframe,'UserupdateInfo1')
+    userframe1,testuserframe1,time1 = generate_new_feature(oldframe,oldtestframe,'UserupdateInfo1')
     userser2 = generate_new_date(oldframe,'UserupdateInfo2')
     testuserser2 = generate_new_date(oldtestframe,'UserupdateInfo2')
     newframe = userframe1.join(userser2)
     testnewframe = testuserframe1.join(testuserser2)
-    return newframe, testnewframe
+    return newframe, testnewframe ,time1
 
-
-trainframe1,testframe1 = generate_newframe1(Trainadd1,Testadd1)
+alltime1 = time.clock()
+trainframe1,testframe1,timeinfo1,timeinfo2 = generate_newframe1(Trainadd1,Testadd1)
+alltime1 = time.clock()-alltime1
 #testframe1 = generate_newframe1(Testadd1)
 
-trainframe2,testframe2 = generate_newframe2(Trainadd2,Testadd2)
+alltime2 = time.clock()
+trainframe2,testframe2,timeuser1 = generate_newframe2(Trainadd2,Testadd2)
 #testframe2 = generate_newframe2(Testadd2)
-
+alltime2 = time.clock() - alltime2
 trainframe1.to_csv('../Output/S1/trainadd1.csv',encoding='gb18030')
 trainframe2.to_csv('../Output/S1/trainadd2.csv',encoding='gb18030')
 
 testframe1.to_csv('../Output/S1/testadd1.csv',encoding='gb18030')
 testframe2.to_csv('../Output/S1/testadd2.csv',encoding='gb18030')
+
+print alltime1,alltime2, timeinfo1, timeinfo2, timeuser1
+
 
 print 'that is the end'

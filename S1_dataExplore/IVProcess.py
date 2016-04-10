@@ -22,54 +22,57 @@ class IVProcess:
     ori_train_file = ''
     ori_type_file = ''
     ori_test_file = ''
-    k = 0
+    segnum = 0
     case = 0
     timeoption = 0
     NaNRate = 0
     IV = 0
     reflag = 0
-    IVthreshhold = 0 
-    def __init__(self, ori_train_file_name, ori_test_file_name, ori_type_file_name, k, case, timeoption, NaNRate, IVthreshhold):
+    IVthreshhold = 0
+    indexname = ''
+    labelname = ''
+    def __init__(self, ori_train_file_name, ori_test_file_name, ori_type_file_name, indexname, labelname, segnum, case, timeoption, NaNRate, IVthreshhold):
         self.ori_train_file = pd.read_csv(ori_train_file_name,encoding="gb18030")
         self.ori_type_file = pd.read_csv(ori_type_file_name,encoding="gb18030")
         self.ori_test_file = pd.read_csv(ori_test_file_name,encoding="gb18030")
-        #self.ori_test_file[19999,:] = 
-        self.k = k
+        #self.ori_test_file[19999,:] =
+        self.labelname = labelname
+        self.indexname = indexname
+        self.segnum = segnum
         self.case = case
         self.timeoption = timeoption
         self.NaNRate = NaNRate
         self.IVthreshhold = IVthreshhold
         self.__replacenull()
-        print 'all -1 has been replaced'
         self.__resetType()
-        print 'resetType finished'
+
    
 
     def __replacenull(self):
         self.ori_train_file = self.ori_train_file.replace(-1, np.nan)
         self.ori_test_file = self.ori_test_file.replace(-1, np.nan)
-
+        print 'all -1 has been replaced'
 
     def __resetType(self):       
         typetmp = self.ori_type_file.dropna(axis=1)
-        se = typetmp.set_index('Idx')
-        ser = pd.Series(se['Index'],index = typetmp['Idx'])
+        se = typetmp.set_index(self.indexname)
+        ser = pd.Series(se['Index'],index = typetmp[self.indexname])
         for i in ser.index:
             if ser[i]=='Categorical':
                 ser[i] = 'object'
             elif ser[i]=='Numerical':
                 ser[i] = 'float64'
             else:
-                pass
+                print str(i),ser[i]
             try:
                  self.ori_train_file[i] =  self.ori_train_file[i].astype(ser[i])
             except:
-                 pass
+                 print 'cannot change type in train',str(i),ser[i]
             try:
                  self.ori_test_file[i] =  self.ori_test_file[i].astype(ser[i])
             except:
-                pass
-
+                 print 'cannot change type in test',str(i),ser[i]
+        print 'resetType finished'
 
     def __WOEcal(self, goodpct, badpct):
         pct_ratio = goodpct/badpct
@@ -194,20 +197,21 @@ class IVProcess:
     def IVFunc(self):#case defined in Objectprocess ,1 only replace unicoid ,2 replace all
         lst = []
         #count = 0
-        newFrame = self.ori_train_file.set_index('Idx')
-        testFrame = self.ori_test_file.set_index('Idx')
-        goodN = newFrame.groupby('target').get_group(1)
-        badN = newFrame.groupby('target').get_group(0)
+        newFrame = self.ori_train_file.set_index(self.indexname)
+        testFrame = self.ori_test_file.set_index(self.indexname)
+        goodN = newFrame.groupby(self.labelname).get_group(1)
+        badN = newFrame.groupby(self.labelname).get_group(0)
+        totalNum = len(newFrame[self.labelname])
         for clm in newFrame.columns:
-            if clm == 'target':
+            if clm == self.labelname:
                 continue
-            elif clm == 'ListingInfo':
+            elif clm == 'ListingInfo': #datatype
                 if self.timeoption == 0:
                     newFrame[clm] = self.__dateprocess(newFrame[clm])
                     testFrame[clm] = self.__dateprocess(testFrame[clm])
                 else:continue
             else:
-                rate = float(len(newFrame[clm].dropna()))/30000
+                rate = float(len(newFrame[clm].dropna()))/totalNum
                 if rate < self.NaNRate:
                     print clm,' drop ',str(rate)
                     self.dropdf[clm] = newFrame[clm]
@@ -232,22 +236,20 @@ class IVProcess:
                             del newFrame[clm]
                             del testFrame[clm]
                         #self.replacedclm[clm] = newFrame[clm]
-                        
-
                     ######## numerical#######
                     else:
                         ##                        
                         ####### Discretization
                         Maxmum = float(newFrame[clm].max())
                         Minmum = float(newFrame[clm].min())
-                        dist = float((Maxmum - Minmum)/self.k)
+                        dist = float((Maxmum - Minmum)/self.segnum)
                         if dist == 0:
                             self.dropdf[clm] = newFrame[clm]
                             print clm,' drop  with 0 dist '
                             del newFrame[clm]
                             del testFrame[clm]
                             continue 
-                        elif (Maxmum - Minmum) < self.k:
+                        elif (Maxmum - Minmum) < self.segnum:
                             newFrame[clm] = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
                             if self.IV < self.IVthreshhold:
                                 self.dropdf[clm] = newFrame[clm]
@@ -256,7 +258,7 @@ class IVProcess:
                                 del testFrame[clm]
                         else:
                             bins =[]
-                            for i in range(0,self.k+1):
+                            for i in range(0,self.segnum+1):
                                 start = Minmum + i*dist
                                 bins.append(start)
                             self.__NUMprocess(goodN[clm],badN[clm],newFrame[clm],bins)
@@ -285,7 +287,7 @@ if __name__=='__main__':
     MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
     MasterFileType = FilePath + 'TypeState.csv'
 
-    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,5000000,1,0,0.05,0.0005)
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,'Idx','target',5000000,1,0,0.05,0.0005)
     IV, DF, DF_test, droped = ivpro.IVFunc()
     
     #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)

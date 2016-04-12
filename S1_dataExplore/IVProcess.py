@@ -98,17 +98,16 @@ class IVProcess:
 
     def __Objectprocess(self, goodser, badser, totalser):##case =1 replace unicode ,case = 2 replace all
         #tmpWOE = pd.Series()
-        goodOValue = goodser.value_counts()
-        badOValue = badser.value_counts()
-        totalOvalue = totalser.value_counts()
-        badtmp = totalOvalue.copy()
+        goodOValue = goodser.value_counts().sort_index()
+        badOValue = badser.value_counts().sort_index()
+        totalOvalue = totalser.value_counts().sort_index()
+        badtmp = totalOvalue.copy() ##length normalized
         goodtmp = totalOvalue.copy()
-        badtmp[(totalOvalue - badOValue).notnull()] = badOValue+1
+        badtmp[(totalOvalue - badOValue).notnull()] = badOValue+1 #revise by weiwu
         badtmp[(totalOvalue - badOValue).isnull()] = 1
         goodtmp[(totalOvalue - goodOValue).notnull()] = goodOValue+1
         goodtmp[(totalOvalue - goodOValue).isnull()] = 1
-        goodtmp = goodtmp.sort_index()
-        badtmp = badtmp.sort_index()
+
         good_pct = goodtmp/goodtmp.sum()
         bad_pct = badtmp/badtmp.sum()
         totalOvalue = totalOvalue.sort_index()
@@ -118,7 +117,7 @@ class IVProcess:
         self.tmptotal = totalser.copy()###original series
         self.tmptotal = self.__repalceWOE(self.tmptotal)
         self.__IVcal(goodtmp,badtmp)
-        print self.IV
+        #print self.IV
         return self.tmptotal
 
 
@@ -168,16 +167,16 @@ class IVProcess:
         dateser = pd.to_datetime(dateseries)
         dateser = dateser-dateser.min()
         return dateser
+         
 
     def __replaceunicode(self,repalceser):
         flag = 0
         for i in repalceser.index:
             if type(repalceser.ix[i]) == unicode:
                 flag=1
-            #else:flag = 0
+                break
         if flag == 1:
             repalceser = repalceser.fillna(u'no') #option with D E
-        else:pass
         return repalceser
 
     
@@ -203,13 +202,17 @@ class IVProcess:
         badN = newFrame.groupby(self.labelname).get_group(0)
         totalNum = len(newFrame[self.labelname])
         for clm in newFrame.columns:
+##            if clm == 'ThirdParty_Info_Period7_16' or clm == 'ThirdParty_Info_Period7_10':
+##                print 'debug ..'
+##                raw_input()
             if clm == self.labelname:
                 continue
             elif clm == 'ListingInfo': #datatype
-                if self.timeoption == 0:
+                if self.timeoption == 1:
                     newFrame[clm] = self.__dateprocess(newFrame[clm])
+                    newFrame[clm] = newFrame[clm].astype('timedelta64[D]')
                     testFrame[clm] = self.__dateprocess(testFrame[clm])
-                else:continue
+                    testFrame[clm] = testFrame[clm].astype('timedelta64[D]')
             else:
                 rate = float(len(newFrame[clm].dropna()))/totalNum
                 if rate < self.NaNRate:
@@ -221,8 +224,14 @@ class IVProcess:
                 else:
                     if newFrame[clm].dtypes =='object':
                         newFrame[clm] = self.__replaceunicode(newFrame[clm])
-                        testFrame[clm] = self.__replaceunicode(testFrame[clm])
                         newFrame[clm] = self.__Objectprocess(goodN[clm],badN[clm],newFrame[clm])
+                        if self.IV < self.IVthreshhold:
+                            self.dropdf[clm] = newFrame[clm]
+                            print clm,' drop  with low IV ',self.IV
+                            del newFrame[clm]
+                            del testFrame[clm]
+                            continue
+                        testFrame[clm] = self.__replaceunicode(testFrame[clm])
                         tmpser = testFrame[clm].copy()
                         testFrame[clm] = self.__repalceWOE(tmpser)
                         for i in testFrame[clm].index:
@@ -230,11 +239,7 @@ class IVProcess:
                                 testFrame[clm] = testFrame[clm].replace(testFrame[i,clm],self.corresWOE[u'no'])
                         #if self.reflag == 1:
                         newFrame[clm] = newFrame[clm].astype('float64')
-                        if self.IV < self.IVthreshhold:
-                            self.dropdf[clm] = newFrame[clm]
-                            print clm,' drop  with low IV ',self.IV
-                            del newFrame[clm]
-                            del testFrame[clm]
+
                         #self.replacedclm[clm] = newFrame[clm]
                     ######## numerical#######
                     else:
@@ -271,7 +276,7 @@ class IVProcess:
                                 del newFrame[clm]
                                 del testFrame[clm]
                     try:
-                        train_mean = newFrame.mean()
+                        train_mean = newFrame.mean() # NaAN is not include in object
                         newFrame[clm]=newFrame[clm].fillna(train_mean)
                         testFrame[clm]=testFrame[clm].fillna(train_mean)
                     except KeyError:
@@ -286,8 +291,8 @@ if __name__=='__main__':
     MasterTrainFile = FilePath + Dataset + 'PPD_Training_Master_GBK_3_1_Training_Set.csv'
     MasterTestile = FilePath + Testset + 'PPD_Master_GBK_2_Test_Set.csv'
     MasterFileType = FilePath + 'TypeState.csv'
-
-    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,'Idx','target',5000000,1,0,0.05,0.0005)
+    ###ori_train_file_name, ori_test_file_name, ori_type_file_name, indexname, labelname, segnum, case, timeoption, NaNRate, IVthreshhold
+    ivpro = IVProcess(MasterTrainFile,MasterTestile,MasterFileType,'Idx','target',5000000,1,1,0.025,0.0005)
     IV, DF, DF_test, droped = ivpro.IVFunc()
     
     #imp = Imputer(missing_values='NaN', strategy='mean', axis=0)

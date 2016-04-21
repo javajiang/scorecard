@@ -59,7 +59,7 @@ def generate_new_feature(newframe,testframe,column):
     testidxcounts = df2['Idx'].value_counts()
     testidxtype = testidxcounts.index
     testidxtype = sorted(testidxtype)
-    print idxtype
+    #print idxtype
 
     def _generate_new(df,typelst,idx,type_name,inilst):
         finalframe = pd.DataFrame(index = idx, columns = type_name)
